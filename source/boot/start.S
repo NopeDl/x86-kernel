@@ -14,11 +14,6 @@ _start:
 	mov %ax, %gs
 
 	mov $_start, %esp
-
-	mov $0xe, %ah
-	mov $'H', %al
-	int $0x10
-
 read_loader:
 	mov $0x8000, %bx
 	mov $0x2, %ah

@@ -87,7 +87,9 @@ static void enable_protect_mode(void)
 
 void loader_entry(void)
 {
-	show_msg("hello,world");
+	show_msg("loading.....\n\t");
+	detect_memory();
+	enable_protect_mode();
 	for (;;)
 	{
 	}
