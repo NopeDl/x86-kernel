@@ -85,12 +85,13 @@ static void enable_protect_mode(void)
 	// 设置CR0保护位
 	uint32_t cr0 = read_cr0();
 	write_cr0(cr0 | 1);
-	//清空远跳转
+	// 远跳转，清空流水线
+	far_jump(8, (uint32_t)protect_mode_entry);
 }
 
 void loader_entry(void)
 {
-	show_msg("loading.....\n\t");
+	show_msg("loading.....\n\r");
 	detect_memory();
 	enable_protect_mode();
 	for (;;)
