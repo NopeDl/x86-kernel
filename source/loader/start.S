@@ -1,4 +1,4 @@
-	#include "loader.h"
+
 
   	// 16位代码，务必加上
   	.code16
