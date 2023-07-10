@@ -83,6 +83,9 @@ static void enable_protect_mode(void)
 	// 加载GDT表
 	lgdt((uint32_t)gdt_table, sizeof(gdt_table));
 	// 设置CR0保护位
+	uint32_t cr0 = read_cr0();
+	write_cr0(cr0 | 1);
+	//清空远跳转
 }
 
 void loader_entry(void)
