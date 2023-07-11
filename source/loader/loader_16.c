@@ -25,7 +25,7 @@ static void detect_memory(void)
 	SMAP_entry_t smap_entry;
 	int signature, bytes;
 
-	show_msg("try to detect memory:");
+	show_msg("detecting memory:");
 
 	// 初次：EDX=0x534D4150,EAX=0xE820,ECX=24,INT 0x15, EBX=0（初次）
 	// 后续：EAX=0xE820,ECX=24,
