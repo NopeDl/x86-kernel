@@ -19,5 +19,6 @@ typedef struct _boot_info_t
     
 }boot_info_t;
 
+extern boot_info_t boot_info;
 
 #endif

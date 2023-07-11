@@ -5,7 +5,7 @@ __asm__(".code16gcc");
 
 #include "loader.h"
 
-static boot_info_t boot_info;
+boot_info_t boot_info;
 
 static void show_msg(char *msg)
 {
@@ -94,7 +94,4 @@ void loader_entry(void)
 	show_msg("loading.....\n\r");
 	detect_memory();
 	enable_protect_mode();
-	for (;;)
-	{
-	}
 }

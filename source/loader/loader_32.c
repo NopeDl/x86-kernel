@@ -35,5 +35,5 @@ static void read_disk(uint32_t sector, uint32_t sector_count, uint8_t* buffer)
 void load_kernel(void)
 {
     read_disk(100, 500, (uint8_t*)SYS_KERNEL_LOAD_ADDR);
-    ((void (*)(void))SYS_KERNEL_LOAD_ADDR)();
+    ((void (*)(boot_info_t*))SYS_KERNEL_LOAD_ADDR)(&boot_info);
 }
