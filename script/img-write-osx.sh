@@ -3,7 +3,7 @@ if [ -f "disk1.vhd" ]; then
 fi
 
 if [ ! -f "disk1.dmg" ]; then
-    echo "找不到disk1.vhd，请从课程提供的百度网盘链接上下载放到image目录下"
+    echo "找不到disk1.vhd"
     exit
 fi
 
@@ -12,7 +12,7 @@ if [ -f "disk2.vhd" ]; then
 fi
 
 if [ ! -f "disk2.dmg" ]; then
-    echo "找不到disk2.vhd，请从课程提供的百度网盘链接上下载放到image目录下"
+    echo "找不到disk2.vhd"
     exit
 fi
 
@@ -26,7 +26,7 @@ dd if=boot.bin of=$DISK1_NAME bs=512 conv=notrunc count=1
 dd if=loader.bin of=$DISK1_NAME bs=512 conv=notrunc seek=1
 
 # 写kernel区，定位到磁盘第100个块
-# dd if=kernel.elf of=$DISK1_NAME bs=512 conv=notrunc seek=100
+dd if=kernel.elf of=$DISK1_NAME bs=512 conv=notrunc seek=100
 
 # 写应用程序init，临时使用
 # dd if=init.elf of=$DISK1_NAME bs=512 conv=notrunc seek=5000
