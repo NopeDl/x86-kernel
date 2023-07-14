@@ -13,6 +13,15 @@ typedef struct
     uint8_t base31_24;
 }segment_desc_t;
 
+typedef struct
+{
+    uint16_t offset15_0;
+    uint16_t selector;
+    uint16_t attr;
+    uint16_t offset31_16;
+}gate_desc_t;
+
+
 #pragma pack()
 
 
@@ -33,6 +42,7 @@ typedef struct
 
 
 void segment_desc_set(int selector, uint32_t base, uint32_t limit, uint16_t attr);
+void gate_desc_set(gate_desc_t* desc ,uint16_t selector, uint32_t offset, uint16_t attr);
 void cpu_init();
 
 #endif
