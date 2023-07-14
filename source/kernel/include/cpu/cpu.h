@@ -15,6 +15,23 @@ typedef struct
 
 #pragma pack()
 
+
+#define SEG_G (1 << 15)
+#define SEG_D (1 << 14)
+#define SEG_P_PRESENT (1 << 7)
+
+#define SEG_DPL0 (0 << 5)
+#define SEG_DPL3 (3 << 5)
+
+#define SEG_S_SYSTEM (0 << 4)
+#define SEG_S_NORMAL (1 << 4)
+
+#define SEG_TYPE_CODE (1 << 3)
+#define SEG_TYPE_DATA (0 << 3)
+
+#define SEG_TYPE_RW (1 << 1)
+
+
 void segment_desc_set(int selector, uint32_t base, uint32_t limit, uint16_t attr);
 void cpu_init();
 
