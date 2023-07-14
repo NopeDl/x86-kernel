@@ -1,4 +1,5 @@
 #include "os_cfg.h"
+
     .text
     .extern kernel_init
     .extern init_main
@@ -25,3 +26,10 @@ gdt_reload:
 
     .bss
 .comm stack, KERNEL_STACK_SIZE
+
+
+    .text
+    .global exception_handle_unknown
+exception_handle_unknown:
+
+    iret

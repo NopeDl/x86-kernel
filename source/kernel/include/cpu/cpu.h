@@ -24,6 +24,14 @@ typedef struct
 
 #pragma pack()
 
+#define GATE_P_PRESENT      0x8000
+#define GATE_DPL0           (0 << 13)
+#define GATE_DPL3           (3 << 13)
+#define GATE_TYPE_INT       (0XE << 8)
+
+
+
+
 
 #define SEG_G (1 << 15)
 #define SEG_D (1 << 14)
