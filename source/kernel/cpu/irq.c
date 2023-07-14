@@ -5,11 +5,24 @@
 
 #define IDT_TABLE_NR 128
 
+static gate_desc_t idt_table[IDT_TABLE_NR];
+
 void exception_handle_unknown(void);
 
 
-static gate_desc_t idt_table[IDT_TABLE_NR];
+static void do_default_handle(const char * msg)
+{
+    while (1)
+    {
+        /* code */
+    }
+    
+}
 
+void do_handle_unknown(void)
+{
+    do_default_handle("unknown exception");
+}
 
 void irq_init(void)
 {

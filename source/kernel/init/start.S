@@ -29,7 +29,8 @@ gdt_reload:
 
 
     .text
+    .extern do_handle_unknown
     .global exception_handle_unknown
 exception_handle_unknown:
-
+    call do_handle_unknown
     iret
