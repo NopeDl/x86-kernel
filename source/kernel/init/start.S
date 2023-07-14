@@ -32,5 +32,18 @@ gdt_reload:
     .extern do_handle_unknown
     .global exception_handle_unknown
 exception_handle_unknown:
+    pusha
+    push %ds
+    push %es
+    push %fs
+    push %gs
+
     call do_handle_unknown
+    
+    pop %gs
+    pop %fs
+    pop %es
+    pop %ds
+    popa
+    
     iret
