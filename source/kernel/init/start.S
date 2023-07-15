@@ -38,7 +38,9 @@ exception_handle_unknown:
     push %fs
     push %gs
 
+    push %esp
     call do_handle_unknown
+    add $(1*4), %esp
     
     pop %gs
     pop %fs

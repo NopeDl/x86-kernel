@@ -10,7 +10,7 @@ static gate_desc_t idt_table[IDT_TABLE_NR];
 void exception_handle_unknown(void);
 
 
-static void do_default_handle(const char * msg)
+static void do_default_handle(excption_frame_t* frame, const char * msg)
 {
     while (1)
     {
@@ -19,9 +19,9 @@ static void do_default_handle(const char * msg)
     
 }
 
-void do_handle_unknown(void)
+void do_handle_unknown(excption_frame_t* frame)
 {
-    do_default_handle("unknown exception");
+    do_default_handle(frame, "unknown exception");
 }
 
 void irq_init(void)
