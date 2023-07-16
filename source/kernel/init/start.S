@@ -28,10 +28,15 @@ gdt_reload:
 .comm stack, KERNEL_STACK_SIZE
 
 
+.macro exception_handle name num code
     .text
-    .extern do_handle_unknown
-    .global exception_handle_unknown
-exception_handle_unknown:
+    .extern do_handle_\name
+    .global exception_handle_\name
+exception_handle_\name:
+    .if \code == 0
+        push $0
+    .endif
+    push $\num
     pusha
     push %ds
     push %es
@@ -39,7 +44,7 @@ exception_handle_unknown:
     push %gs
 
     push %esp
-    call do_handle_unknown
+    call do_handle_\name
     add $(1*4), %esp
     
     pop %gs
@@ -47,5 +52,11 @@ exception_handle_unknown:
     pop %es
     pop %ds
     popa
+
+    add $(2*4), %esp
     
     iret
+.endm
+
+exception_handle unknown -1 0
+exception_handle divider 0 0
