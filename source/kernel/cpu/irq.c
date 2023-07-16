@@ -117,6 +117,28 @@ void do_handle_control_protection_exception(excption_frame_t *frame)
     do_default_handle(frame, "control_protection exception");
 }
 
+static void init_pic(void)
+{
+    //第一块芯片
+    outb(PIC0_ICW1, PIC_ICW1_ALWAYS_1 | PIC_ICW1_ICW4);
+    //被异常中断使用了，要跳到另一部分
+    outb(PIC0_ICW2, IRQ_PIC_START);
+    outb(PIC0_ICW3, 1 << 2);
+    outb(PIC0_ICW4, PIC_ICW4_8086);
+
+    //第二块
+    outb(PIC1_ICW1, PIC_ICW1_ALWAYS_1 | PIC_ICW1_ICW4);
+    outb(PIC1_ICW2, IRQ_PIC_START + 8);
+    outb(PIC1_ICW3, 2);
+    outb(PIC1_ICW4, PIC_ICW4_8086);
+
+    //设置寄存器，先屏蔽中断，暂时不响应，中断处理程序还没好
+    //不禁止第二片8259
+    outb(PIC0_IMR, 0XFF & ~(1 << 2));
+    //禁止第二片接受响应
+    outb(PIC1_IMR, 0XFF);
+}
+
 void irq_init(void)
 {
     for (int i = 0; i < IDT_TABLE_NR; i++)
@@ -147,6 +169,9 @@ void irq_init(void)
     irq_install(IRQ21_CP, exception_handle_control_protection_exception);
 
     lidt((uint32_t)idt_table, sizeof(idt_table));
+
+    //初始化中断控制器
+    init_pic();
 }
 
 void irq_install(int num, exception_handle_t handle)

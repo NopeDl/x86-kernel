@@ -25,6 +25,25 @@
 #define IRQ20_VE     20
 #define IRQ21_CP     21
 
+#define PIC0_ICW1        0X20
+#define PIC0_ICW2        0X21
+#define PIC0_ICW3        0X21
+#define PIC0_ICW4        0X21
+#define PIC0_IMR         0X21
+
+#define PIC1_ICW1        0XA0
+#define PIC1_ICW2        0XA1
+#define PIC1_ICW3        0XA1
+#define PIC1_ICW4        0XA1
+#define PIC1_IMR         0XA1
+
+#define PIC_ICW1_ALWAYS_1       (1 << 4)
+#define PIC_ICW1_ICW4           (1 << 0)
+#define PIC_ICW4_8086           (1 << 0)
+#define IRQ_PIC_START            0X20
+
+
+
 typedef struct 
 {
     uint32_t gs, fs, es, ds;
