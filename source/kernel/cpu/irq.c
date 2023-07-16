@@ -9,10 +9,7 @@ static gate_desc_t idt_table[IDT_TABLE_NR];
 
 static void do_default_handle(excption_frame_t *frame, const char *msg)
 {
-    while (1)
-    {
-        /* code */
-    }
+    hlt();
 }
 
 void do_handle_unknown(excption_frame_t *frame)
@@ -25,6 +22,101 @@ void do_handle_divider(excption_frame_t *frame)
     do_default_handle(frame, "divider exception");
 }
 
+void do_handle_debug(excption_frame_t *frame)
+{
+    do_default_handle(frame, "divider exception");
+}
+
+void do_handle_nmi(excption_frame_t *frame)
+{
+    do_default_handle(frame, "nmi exception");
+}
+
+void do_handle_breakpoint(excption_frame_t *frame)
+{
+    do_default_handle(frame, "breakpoint exception");
+}
+
+void do_handle_overflow(excption_frame_t *frame)
+{
+    do_default_handle(frame, "overflow exception");
+}
+
+void do_handle_bound_range_exceeded(excption_frame_t *frame)
+{
+    do_default_handle(frame, "bound_range_exceeded exception");
+}
+
+void do_handle_invalid_opcode(excption_frame_t *frame)
+{
+    do_default_handle(frame, "invalid_opcode exception");
+}
+
+void do_handle_device_unavalible(excption_frame_t *frame)
+{
+    do_default_handle(frame, "device_unavalible exception");
+}
+
+void do_handle_double_fault(excption_frame_t *frame)
+{
+    do_default_handle(frame, "double_fault exception");
+}
+
+void do_handle_invalid_tss(excption_frame_t *frame)
+{
+    do_default_handle(frame, "invalid_tss exception");
+}
+
+void do_handle_seg_not_present(excption_frame_t *frame)
+{
+    do_default_handle(frame, "seg_not_present exception");
+}
+
+void do_handle_stack_seg_fault(excption_frame_t *frame)
+{
+    do_default_handle(frame, "stack_seg_fault exception");
+}
+
+void do_handle_general_protection(excption_frame_t *frame)
+{
+    do_default_handle(frame, "general_protection exception");
+}
+
+void do_handle_page_fault(excption_frame_t *frame)
+{
+    do_default_handle(frame, "page_fault exception");
+}
+
+void do_handle_math_fault(excption_frame_t *frame)
+{
+    do_default_handle(frame, "math_fault exception");
+}
+
+void do_handle_alignment_check(excption_frame_t *frame)
+{
+    do_default_handle(frame, "alignment_check exception");
+}
+
+void do_handle_machine_check(excption_frame_t *frame)
+{
+    do_default_handle(frame, "machine_check exception");
+}
+
+void do_handle_simd_floating_point_exception(excption_frame_t *frame)
+{
+    do_default_handle(frame, "simd_floating_point_exception exception");
+}
+
+void do_handle_virtualization_exception(excption_frame_t *frame)
+{
+    do_default_handle(frame, "virtualization exception");
+}
+
+void do_handle_control_protection_exception(excption_frame_t *frame)
+{
+    do_default_handle(frame, "control_protection exception");
+}
+
 void irq_init(void)
 {
     for (int i = 0; i < IDT_TABLE_NR; i++)
@@ -34,6 +126,25 @@ void irq_init(void)
     }
 
     irq_install(IRQ0_DE, exception_handle_divider);
+    irq_install(IRQ1_DB, exception_handle_debug);
+    irq_install(IRQ2_NMI, exception_handle_nmi);
+    irq_install(IRQ3_BP, exception_handle_breakpoint);
+    irq_install(IRQ4_OF, exception_handle_overflow);
+    irq_install(IRQ5_BR, exception_handle_bound_range_exceeded);
+    irq_install(IRQ6_UD, exception_handle_invalid_opcode);
+    irq_install(IRQ7_NM, exception_handle_device_unavalible);
+    irq_install(IRQ8_DF, exception_handle_double_fault);
+    irq_install(IRQ10_TS, exception_handle_invalid_tss);
+    irq_install(IRQ11_NP, exception_handle_seg_not_present);
+    irq_install(IRQ12_SS, exception_handle_stack_seg_fault);
+    irq_install(IRQ13_GP, exception_handle_general_protection);
+    irq_install(IRQ14_PF, exception_handle_page_fault);
+    irq_install(IRQ16_MF, exception_handle_math_fault);
+    irq_install(IRQ17_AC, exception_handle_alignment_check);
+    irq_install(IRQ18_MC, exception_handle_machine_check);
+    irq_install(IRQ19_XM, exception_handle_simd_floating_point_exception);
+    irq_install(IRQ20_VE, exception_handle_virtualization_exception);
+    irq_install(IRQ21_CP, exception_handle_control_protection_exception);
 
     lidt((uint32_t)idt_table, sizeof(idt_table));
 }
@@ -44,7 +155,7 @@ void irq_install(int num, exception_handle_t handle)
     {
         return;
     }
-    
+
     gate_desc_set(idt_table + num, KERNEL_SELECTOR_CS, (uint32_t)handle,
-                      GATE_P_PRESENT | GATE_DPL0 | GATE_TYPE_INT);
+                  GATE_P_PRESENT | GATE_DPL0 | GATE_TYPE_INT);
 }
