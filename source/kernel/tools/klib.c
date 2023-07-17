@@ -67,7 +67,7 @@ int kernel_strncmp(const char *s1, const char *s2, int size)
         return -1;
     }
 
-    //这里size没有用到
+    // 这里size没有用到
     while (*s1 && *s2 && (*s1 == *s2) && size)
     {
         s1++;
@@ -125,4 +125,43 @@ int kernel_memcmp(void *d1, void *d2, int size)
     }
 
     return 0;
+}
+
+void kernel_vsprintf(char *buf, const char *msg, va_list args)
+{
+    enum
+    {
+        NORMAL,
+        READ_FMT
+    } state = NORMAL;
+    char *cur = buf;
+    char ch;
+    while (ch = *msg++)
+    {
+        switch (state)
+        {
+        case NORMAL:
+            if (ch == '%')
+            {
+                state = READ_FMT;
+            }
+            else
+            {
+                *cur++ = ch;
+            }
+            break;
+        case READ_FMT:
+            if (ch == 's')
+            {
+                const char* str = va_arg(args, char*);
+                int len = kernel_strlen(str);
+                while (len--)
+                {
+                    *cur++ = *str++;
+                }
+            }
+            state = NORMAL;
+            break;
+        }
+    }
 }
