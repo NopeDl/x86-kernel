@@ -2,12 +2,15 @@
 #include "cpu/cpu.h"
 #include "cpu/irq.h"
 #include "dev/timer.h"
+#include "tools/log.h"
+#include "os_cfg.h"
 
 /**
  * 内核入口
  */
 void kernel_init(boot_info_t *boot_info)
 {
+    log_init();
     cpu_init();
     irq_init();
     timer_init();
@@ -16,7 +19,9 @@ void kernel_init(boot_info_t *boot_info)
 
 void init_main()
 {
-    irq_enable_global();
+    log_printf("running kernel....");
+    log_printf("Version: %s", OS_VERSION);
+    // irq_enable_global();
     while (1)
     {
         /* code */
