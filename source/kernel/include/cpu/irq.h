@@ -79,6 +79,10 @@ void exception_handle_simd_floating_point_exception(void);
 void exception_handle_virtualization_exception(void);
 void exception_handle_control_protection_exception(void);
 
+void irq_enable_global();
+void irq_disable_global();
+void irq_enable(int irq_num);
+void irq_disable(int irq_num);
 
 
 #endif

@@ -119,23 +119,23 @@ void do_handle_control_protection_exception(excption_frame_t *frame)
 
 static void init_pic(void)
 {
-    //第一块芯片
+    // 第一块芯片
     outb(PIC0_ICW1, PIC_ICW1_ALWAYS_1 | PIC_ICW1_ICW4);
-    //被异常中断使用了，要跳到另一部分
+    // 被异常中断使用了，要跳到另一部分
     outb(PIC0_ICW2, IRQ_PIC_START);
     outb(PIC0_ICW3, 1 << 2);
     outb(PIC0_ICW4, PIC_ICW4_8086);
 
-    //第二块
+    // 第二块
     outb(PIC1_ICW1, PIC_ICW1_ALWAYS_1 | PIC_ICW1_ICW4);
     outb(PIC1_ICW2, IRQ_PIC_START + 8);
     outb(PIC1_ICW3, 2);
     outb(PIC1_ICW4, PIC_ICW4_8086);
 
-    //设置寄存器，先屏蔽中断，暂时不响应，中断处理程序还没好
-    //不禁止第二片8259
+    // 设置寄存器，先屏蔽中断，暂时不响应，中断处理程序还没好
+    // 不禁止第二片8259
     outb(PIC0_IMR, 0XFF & ~(1 << 2));
-    //禁止第二片接受响应
+    // 禁止第二片接受响应
     outb(PIC1_IMR, 0XFF);
 }
 
@@ -170,7 +170,7 @@ void irq_init(void)
 
     lidt((uint32_t)idt_table, sizeof(idt_table));
 
-    //初始化中断控制器
+    // 初始化中断控制器
     init_pic();
 }
 
@@ -183,4 +183,56 @@ void irq_install(int num, exception_handle_t handle)
 
     gate_desc_set(idt_table + num, KERNEL_SELECTOR_CS, (uint32_t)handle,
                   GATE_P_PRESENT | GATE_DPL0 | GATE_TYPE_INT);
+}
+
+void irq_enable_global()
+{
+    sti();
+}
+
+void irq_disable_global()
+{
+    cli();
+}
+
+void irq_enable(int irq_num)
+{
+    if (irq_num < 0)
+    {
+        return;
+    }
+
+    irq_num -= IRQ_PIC_START;
+    if (irq_num < 8)
+    {
+        // 第一块8259
+        uint8_t imr = inb(PIC0_IMR);
+        outb(PIC0_IMR, imr & ~(1 << irq_num));
+    }
+    else
+    {
+        uint8_t imr = inb(PIC1_IMR);
+        outb(PIC1_IMR, imr & ~(1 << irq_num));
+    }
+}
+
+void irq_disable(int irq_num)
+{
+    if (irq_num < 0)
+    {
+        return;
+    }
+
+    irq_num -= IRQ_PIC_START;
+    if (irq_num < 8)
+    {
+        // 第一块8259
+        uint8_t imr = inb(PIC0_IMR);
+        outb(PIC0_IMR, imr | (1 << irq_num));
+    }
+    else
+    {
+        uint8_t imr = inb(PIC1_IMR);
+        outb(PIC1_IMR, imr | (1 << irq_num));
+    }
 }
