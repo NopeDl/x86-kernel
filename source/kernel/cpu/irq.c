@@ -7,6 +7,7 @@
 
 static gate_desc_t idt_table[IDT_TABLE_NR];
 
+
 static void do_default_handle(excption_frame_t *frame, const char *msg)
 {
     hlt();
@@ -235,4 +236,13 @@ void irq_disable(int irq_num)
         uint8_t imr = inb(PIC1_IMR);
         outb(PIC1_IMR, imr | (1 << irq_num));
     }
+}
+
+void pic_send_eoi(int irq_num)
+{
+    irq_num -= IRQ_PIC_START;
+    if (irq_num >= 8) {
+        outb(PIC1_OCW2, PIC_OCW2_EOI);
+    }
+    outb(PIC0_OCW2, PIC_OCW2_EOI);
 }

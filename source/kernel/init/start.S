@@ -81,3 +81,5 @@ exception_handle machine_check 18 0
 exception_handle simd_floating_point_exception 19 0
 exception_handle virtualization_exception 20 0
 exception_handle control_protection_exception 21 1
+
+exception_handle timer 0x20 0
