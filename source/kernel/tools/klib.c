@@ -127,6 +127,43 @@ int kernel_memcmp(void *d1, void *d2, int size)
     return 0;
 }
 
+void kernel_integer_to_str(char* str, int num, int x)
+{
+    static const char chars[] = {"0123456789ABCDEF"};
+    char* p = str;
+    char* start = str;
+    if ((x != 2) && (x != 8) && (x != 10) && (x != 16))
+    {
+        *p = '\0';
+        return;
+    }
+
+    if (num < 0 && x == 10)
+    {
+        *p++ = '-';
+        start++;
+        num = -num;
+    }
+
+    while (num)
+    {
+        *p++ = *(num % 10 + chars);
+        num /= 10;
+    }
+    *p-- = '\0';
+    
+    
+    while (start < p)
+    {
+        char t = *start;
+        *start = *p;
+        *p = t;
+
+        p--;
+        start++;
+    }
+}
+
 void kernel_vsprintf(char *buf, const char *msg, va_list args)
 {
     enum
@@ -153,12 +190,29 @@ void kernel_vsprintf(char *buf, const char *msg, va_list args)
         case READ_FMT:
             if (ch == 's')
             {
-                const char* str = va_arg(args, char*);
+                const char *str = va_arg(args, char *);
                 int len = kernel_strlen(str);
                 while (len--)
                 {
                     *cur++ = *str++;
                 }
+            }
+            else if (ch == 'c')
+            {
+                char c = va_arg(args, int);
+                *cur++ = c;
+            }
+            else if (ch == 'd')
+            {
+                int num = va_arg(args, int);
+                kernel_integer_to_str(cur, num, 10);
+                cur += kernel_strlen(cur);
+            }
+            else if (ch == 'x')
+            {
+                int num = va_arg(args, int);
+                kernel_integer_to_str(cur, num, 16);
+                cur += kernel_strlen(cur);
             }
             state = NORMAL;
             break;
