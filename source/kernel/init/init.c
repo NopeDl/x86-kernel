@@ -20,7 +20,7 @@ void kernel_init(boot_info_t *boot_info)
 void init_main()
 {
     log_printf("running kernel....");
-    log_printf("Version: %s, %d, %d, %c, %x", OS_VERSION, 123456, -1234, 'G', 0xA234);
+    log_printf("Version: %s", OS_VERSION);
     // irq_enable_global();
     while (1)
     {
