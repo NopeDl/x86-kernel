@@ -212,6 +212,7 @@ void irq_enable(int irq_num)
     }
     else
     {
+        irq -= 8;
         uint8_t imr = inb(PIC1_IMR);
         outb(PIC1_IMR, imr & ~(1 << irq_num));
     }
@@ -233,6 +234,7 @@ void irq_disable(int irq_num)
     }
     else
     {
+        irq -= 8;
         uint8_t imr = inb(PIC1_IMR);
         outb(PIC1_IMR, imr | (1 << irq_num));
     }
