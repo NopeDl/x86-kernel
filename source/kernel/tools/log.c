@@ -18,5 +18,14 @@ void log_init()
 
 void log_printf(const char* msg, ...)
 {
-    
+    const char * p = msg;
+    while (*p != '\0')
+    {
+        //判断是否在忙
+        while ((inb(COM1_PORT + 5) & (1 << 6)) == 0);
+        //不忙了
+        outb(COM1_PORT, *p++);
+    }
+    outb(COM1_PORT, '\r');
+    outb(COM1_PORT, '\n');
 }
