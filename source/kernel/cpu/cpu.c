@@ -30,6 +30,18 @@ void gate_desc_set(gate_desc_t* desc ,uint16_t selector, uint32_t offset, uint16
     desc->selector = selector;
 }
 
+int gdt_alloc_desc()
+{
+    for (int i = 1; i < GDT_TABLE_SIZE; i++)
+    {
+        if (gdt_table[i].attr == 0)
+        {
+            return i * sizeof(segment_desc_t);
+        }
+    }
+    return -1;
+}
+
 
 void gdt_init(){
     for (int i = 0; i < GDT_TABLE_SIZE; i++)
