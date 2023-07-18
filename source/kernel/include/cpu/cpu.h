@@ -22,6 +22,30 @@ typedef struct
 }gate_desc_t;
 
 
+typedef struct 
+{
+    uint16_t limit15_0;
+    uint16_t base15_0;
+    uint8_t base23_16;
+    uint8_t attr;
+    uint8_t attr_and_limit19_16;
+    uint8_t base31_24;
+}tss_desc_t;
+
+typedef struct 
+{
+    uint32_t pre_link;
+    uint32_t esp0, ss0, esp1, ss1, esp2, ss2;
+    uint32_t cr3;
+    uint32_t eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
+    uint32_t es, cs, ss, ds, fs, gs;
+    uint32_t ldt_selector;
+    uint32_t io_map;
+    uint32_t ssp;
+}tss_t;
+
+
+
 #pragma pack()
 
 #define GATE_P_PRESENT      0x8000
