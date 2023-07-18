@@ -10,7 +10,7 @@ static gate_desc_t idt_table[IDT_TABLE_NR];
 
 static void dump_core_regs (excption_frame_t * frame) {
     // 打印CPU寄存器相关内容
-    log_printf("IRQ: %d, error code: %d.", frame->num, frame->error_code);
+    log_printf("IRQ: %d, error code: %d.", frame->num, frame->code);
     log_printf("CS: %d\nDS: %d\nES: %d\nSS: %d\nFS:%d\nGS:%d",
                frame->cs, frame->ds, frame->es, frame->ds, frame->fs, frame->gs
     );

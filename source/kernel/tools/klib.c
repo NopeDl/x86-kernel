@@ -1,4 +1,6 @@
 #include "tools/klib.h"
+#include "tools/log.h"
+#include "comm/cpu_instr.h"
 
 void kernel_strcpy(char *dest, char *src)
 {
@@ -127,11 +129,11 @@ int kernel_memcmp(void *d1, void *d2, int size)
     return 0;
 }
 
-void kernel_integer_to_str(char* str, int num, int x)
+void kernel_integer_to_str(char *str, int num, int x)
 {
     static const char chars[] = {"0123456789ABCDEF"};
-    char* p = str;
-    char* start = str;
+    char *p = str;
+    char *start = str;
     if ((x != 2) && (x != 8) && (x != 10) && (x != 16))
     {
         *p = '\0';
@@ -151,8 +153,7 @@ void kernel_integer_to_str(char* str, int num, int x)
         num /= 10;
     }
     *p-- = '\0';
-    
-    
+
     while (start < p)
     {
         char t = *start;
@@ -218,4 +219,15 @@ void kernel_vsprintf(char *buf, const char *msg, va_list args)
             break;
         }
     }
+}
+
+void pannic(const char *file, int line, const char *func, const char *cond)
+{
+    log_printf("assert failed! %s", cond);
+    log_printf("file: %s\nline: %d, func: %s\n", file, line, func);
+    while (1)
+    {
+        hlt();
+    }
+    
 }
