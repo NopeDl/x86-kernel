@@ -5,6 +5,7 @@
 #include "tools/log.h"
 #include "os_cfg.h"
 #include "tools/klib.h"
+#include "core/task.h"
 
 /**
  * 内核入口
