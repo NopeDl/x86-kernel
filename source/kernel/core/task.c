@@ -34,7 +34,7 @@ int task_init(task_t *task, uint32_t entry, uint32_t esp)
     return 0;
 }
 
-void tast_switch_from_to(task_t *from, task_t *to)
+void task_switch_from_to(task_t *from, task_t *to)
 {
     switch_tss(to->tss_sel);
 }
