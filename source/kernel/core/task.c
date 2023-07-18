@@ -14,7 +14,7 @@ static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
     }
     tss_t *tp = &task->tss;
     segment_desc_set(tss_selector, (uint32_t)tp, sizeof(tss_t),
-                     SEG_P_PRESENT | SEG_D PL0 | SEG_TYPE_TSS);
+                     SEG_P_PRESENT | SEG_DPL0 | SEG_TYPE_TSS);
 
     kernel_memset(tp, 0, sizeof(tss_t));
     tp->esp = tp->esp0 = esp;
@@ -36,5 +36,5 @@ int task_init(task_t *task, uint32_t entry, uint32_t esp)
 
 void tast_switch_from_to(task_t *from, task_t *to)
 {
-    
+    switch_tss(to->tss_sel);
 }

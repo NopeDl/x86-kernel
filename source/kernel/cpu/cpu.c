@@ -66,3 +66,8 @@ void cpu_init()
 {
     gdt_init();
 }
+
+void switch_tss(int sel)
+{
+    far_jump(sel, 0);
+}
