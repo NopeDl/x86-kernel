@@ -3,11 +3,12 @@
 #include "comm/types.h"
 #include "cpu/cpu.h"
 
-
 typedef struct
 {
     tss_t tss;
-}task_t;
+    int tss_sel;
+} task_t;
 
-int task_init(task_t* task, uint32_t entry, uint32_t esp);
+int task_init(task_t *task, uint32_t entry, uint32_t esp);
+void tast_switch_from_to(task_t *from, task_t *to);
 #endif
