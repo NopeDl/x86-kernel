@@ -70,7 +70,9 @@ static uint32_t reload_elf_file (uint8_t * file_buffer) {
 
 void load_kernel(void)
 {
+    //加载elf文件
     read_disk(100, 500, (uint8_t*)SYS_KERNEL_LOAD_ADDR);
+    //将elf文件指定的代码装入内存
     uint32_t kernel_entry = reload_elf_file((uint8_t *)SYS_KERNEL_LOAD_ADDR);
 	if (kernel_entry == 0) {
 		die(-1);
