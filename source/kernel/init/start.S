@@ -83,3 +83,26 @@ exception_handle virtualization_exception 20 0
 exception_handle control_protection_exception 21 1
 
 exception_handle timer 0x20 0
+
+    .text
+    .global simple_switch
+simple_switch:
+    movl 4(%esp), %eax   // 取from->stack
+	movl 8(%esp), %edx   // 取to->stack
+
+	// 保存前一任务的状态
+	push %ebp
+	push %ebx
+	push %esi
+	push %edi
+
+	// 切换栈
+	mov %esp, (%eax)    // from->stack = esp
+  	mov %edx, %esp      // esp = to->stack
+
+	// 加载下一任务的栈
+	pop %edi
+	pop %esi
+	pop %ebx
+	pop %ebp
+  	ret
