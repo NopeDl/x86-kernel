@@ -9,7 +9,7 @@
 #include "comm/cpu_instr.h"
 
 
-
+static boot_info_t * init_boot_info;
 
 static task_t first_task;       // 第一个任务
 static uint32_t init_task_stack[1024];	// 空闲任务堆栈
@@ -34,6 +34,7 @@ void init_task_entry(void) {
 void kernel_init(boot_info_t *boot_info)
 {
     ASSERT(boot_info->ram_region_count != 0);
+    init_boot_info = boot_info;
     log_init();
     cpu_init();
     irq_init();
