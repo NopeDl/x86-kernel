@@ -11,7 +11,6 @@
 
 static boot_info_t * init_boot_info;
 
-static task_t first_task;       // 第一个任务
 static uint32_t init_task_stack[1024];	// 空闲任务堆栈
 static task_t init_task;
 
@@ -24,7 +23,7 @@ void init_task_entry(void) {
 
     for (;;) {
         log_printf("init task: %d", count++);
-        task_switch_from_to(&init_task, &first_task);
+        task_switch_from_to(&init_task, get_first_task());
     }
 }
 
@@ -39,6 +38,7 @@ void kernel_init(boot_info_t *boot_info)
     cpu_init();
     irq_init();
     timer_init();
+    task_manager_init();
     // 结束此函数后会走汇编重新加载gdt
 }
 
@@ -51,11 +51,10 @@ void init_main()
 
      // 初始化任务
     task_init(&init_task, (uint32_t)init_task_entry, (uint32_t)&init_task_stack[1024]);
-    task_init(&first_task, 0, 0);
-    write_tr(first_task.tss_sel);
+    task_first_init();
     int count = 0;
     for (;;) {
         log_printf("first task: %d", count++);
-        task_switch_from_to(&first_task, &init_task);
+        task_switch_from_to(get_first_task(), &init_task);
     }
 }
