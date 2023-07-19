@@ -31,24 +31,27 @@ typedef struct
 
 void list_init(list_t *list);
 
-static inline int list_is_empty(list_t* list)
+static inline int list_is_empty(list_t *list)
 {
     return list->count == 0;
 }
 
-static inline int list_count(list_t* list)
+static inline int list_count(list_t *list)
 {
     return list->count;
 }
 
-static inline list_node_t* list_first(list_t* list)
+static inline list_node_t *list_first(list_t *list)
 {
     return list->first;
 }
 
-static inline list_node_t* list_last(list_t* list)
+static inline list_node_t *list_last(list_t *list)
 {
     return list->last;
 }
+
+void list_insert_first(list_t *list, list_node_t *node);
+void list_insert_last(list_t *list, list_node_t *node);
 
 #endif
