@@ -30,10 +30,19 @@ static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
     return 0;
 }
 
-int task_init(task_t *task, uint32_t entry, uint32_t esp)
+int task_init(task_t *task, const char *name, uint32_t entry, uint32_t esp)
 {
     ASSERT(task != (task_t *)0);
     tss_init(task, entry, esp);
+
+    list_node_init(&task->run_node);
+    list_node_init(&task->all_node);
+
+    kernel_strncpy(task->name, name, TASK_NAME_SIZE);
+    task->state = TASK_CREATED;
+
+    task_set_ready(task);
+    list_insert_last(&task_manager.task_list, &task->all_node);
     return 0;
 }
 
@@ -46,14 +55,14 @@ void task_switch_from_to(task_t *from, task_t *to)
 
 void task_first_init()
 {
-    task_init(&task_manager.first_task, 0, 0);
+    task_init(&task_manager.first_task, "first-task", 0, 0);
 
     // 写TR寄存器，指示当前运行的第一个任务
     write_tr(task_manager.first_task.tss_sel);
     task_manager.cur_task = &task_manager.first_task;
 }
 
-task_t* get_first_task()
+task_t *get_first_task()
 {
     return &task_manager.first_task;
 }
@@ -61,8 +70,20 @@ task_t* get_first_task()
 void task_manager_init()
 {
     // 各队列初始化
-    list_init(task_manager.ready_list);
-    list_init(task_manager.task_list);
+    list_init(&task_manager.ready_list);
+    list_init(&task_manager.task_list);
 
     task_manager.cur_task = (task_t *)0;
+}
+
+void task_set_ready(task_t *task)
+{
+    list_insert_last(&task_manager.task_list, &task->run_node);
+    task->state = TASK_READY;
+}
+
+void task_set_block(task_t *task)
+{
+    list_remove(&task_manager.task_list, &task->run_node);
+    task->state = TASK_READY;
 }
