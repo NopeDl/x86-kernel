@@ -42,4 +42,11 @@ task_t *get_first_task();
 
 void task_set_ready(task_t *task);
 void task_set_block(task_t *task);
+
+task_t *get_task_next_run();
+task_t *get_task_cur();
+
+int sys_sched_yield();
+void task_dispatch();
+
 #endif
