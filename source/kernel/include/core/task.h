@@ -5,6 +5,7 @@
 #include "tools/list.h"
 
 #define TASK_NAME_SIZE 32
+#define TASK_TIME_SLICE_DEFAULT 10
 
 typedef struct
 {
@@ -16,6 +17,9 @@ typedef struct
         TASK_READY,
         TASK_WAITING
     } state;
+
+    int slice_ticks; // 递减
+    int time_ticks;
 
     char name[TASK_NAME_SIZE];
 
@@ -48,5 +52,11 @@ task_t *get_task_cur();
 
 int sys_sched_yield();
 void task_dispatch();
+
+/**
+ * 定时中断处理
+*/
+void task_time_tick();
+
 
 #endif

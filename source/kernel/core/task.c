@@ -41,6 +41,9 @@ int task_init(task_t *task, const char *name, uint32_t entry, uint32_t esp)
     kernel_strncpy(task->name, name, TASK_NAME_SIZE);
     task->state = TASK_CREATED;
 
+    task->time_ticks = TASK_TIME_SLICE_DEFAULT;
+    task->slice_ticks = TASK_TIME_SLICE_DEFAULT;
+
     task_set_ready(task);
     list_insert_last(&task_manager.task_list, &task->all_node);
     return 0;
@@ -124,4 +127,19 @@ void task_dispatch()
     task_manager.cur_task = to;
     to->state = TASK_RUNNING;
     task_switch_from_to(from, to);
+}
+
+/**
+ * 定时中断
+*/
+void task_time_tick()
+{
+    task_t *cur_task = get_task_cur();
+    if (--cur_task->slice_ticks == 0)
+    {
+        cur_task->slice_ticks = cur_task->time_ticks;
+        task_set_block(cur_task);
+        task_set_ready(cur_task);
+        task_dispatch();
+    }
 }
