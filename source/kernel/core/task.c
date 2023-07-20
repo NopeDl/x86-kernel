@@ -78,13 +78,13 @@ void task_manager_init()
 
 void task_set_ready(task_t *task)
 {
-    list_insert_last(&task_manager.task_list, &task->run_node);
+    list_insert_last(&task_manager.ready_list, &task->run_node);
     task->state = TASK_READY;
 }
 
 void task_set_block(task_t *task)
 {
-    list_remove(&task_manager.task_list, &task->run_node);
+    list_remove(&task_manager.ready_list, &task->run_node);
     task->state = TASK_READY;
 }
 
