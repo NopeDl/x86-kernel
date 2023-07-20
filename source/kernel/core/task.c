@@ -4,6 +4,7 @@
 #include "tools/log.h"
 #include "cpu/cpu.h"
 #include "comm/cpu_instr.h"
+#include "cpu/irq.h"
 
 static task_manager_t task_manager;
 
@@ -44,8 +45,10 @@ int task_init(task_t *task, const char *name, uint32_t entry, uint32_t esp)
     task->time_ticks = TASK_TIME_SLICE_DEFAULT;
     task->slice_ticks = TASK_TIME_SLICE_DEFAULT;
 
+    irq_state state = irq_enter_protection();
     task_set_ready(task);
     list_insert_last(&task_manager.task_list, &task->all_node);
+    irq_leave_protection(state);
     return 0;
 }
 
@@ -104,29 +107,34 @@ task_t *get_task_cur()
 
 int sys_sched_yield()
 {
-    if (list_count(&task_manager.ready_list) <= 1)
+    irq_state state = irq_enter_protection();
+    if (list_count(&task_manager.ready_list) > 1)
     {
-        return 0;
-    }
-    task_t *cur_task = get_task_cur();
-    task_set_block(cur_task);
-    task_set_ready(cur_task);
+        task_t *cur_task = get_task_cur();
+        task_set_block(cur_task);
+        task_set_ready(cur_task);
 
-    task_dispatch();
+        task_dispatch();
+    }
+    irq_leave_protection(state);
+    return 0;
 }
 
 void task_dispatch()
 {
+    irq_state state = irq_enter_protection();
+    
     task_t *to = get_task_next_run();
     task_t *from = get_task_cur();
 
-    if (to == from)
+    if (to != from)
     {
-        return;
+        task_manager.cur_task = to;
+        to->state = TASK_RUNNING;
+        task_switch_from_to(from, to);
     }
-    task_manager.cur_task = to;
-    to->state = TASK_RUNNING;
-    task_switch_from_to(from, to);
+
+    irq_leave_protection(state);
 }
 
 /**
