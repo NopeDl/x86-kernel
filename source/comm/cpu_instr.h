@@ -92,7 +92,20 @@ static inline void hlt()
 
 static inline void write_tr(uint16_t tss_sel)
 {
-    __asm__ __volatile__("ltr %%ax"::"a"(tss_sel));
+    __asm__ __volatile__("ltr %%ax" ::"a"(tss_sel));
+}
+
+static inline uint32_t read_eflags()
+{
+    uint32_t ret = 0;
+    __asm__ __volatile__("pushf\n\tpop %%eax"
+                         : "=a"(ret));
+    return ret;
+}
+
+static inline void write_eflags(uint32_t state)
+{
+    __asm__ __volatile__("push %%eax\n\tpopf" ::"a"(state));
 }
 
 #endif

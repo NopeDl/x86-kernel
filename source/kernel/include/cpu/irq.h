@@ -88,4 +88,8 @@ void irq_enable(int irq_num);
 void irq_disable(int irq_num);
 
 void pic_send_eoi(int irq_num);
+
+typedef uint32_t irq_state;
+irq_state irq_enter_protection();
+void irq_leave_protection(irq_state state);
 #endif

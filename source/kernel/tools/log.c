@@ -2,6 +2,7 @@
 #include "tools/log.h"
 #include "tools/klib.h"
 #include "comm/cpu_instr.h"
+#include "cpu/irq.h"
 
 // 暂时使用串行接口方法
 void log_init()
@@ -27,6 +28,7 @@ void log_printf(const char *msg, ...)
     kernel_vsprintf(str_buf, msg, args);
     va_end(args);
 
+    irq_state state = irq_enter_protection();
     const char *p = str_buf;
     while (*p != '\0')
     {
@@ -38,4 +40,5 @@ void log_printf(const char *msg, ...)
     }
     outb(COM1_PORT, '\r');
     outb(COM1_PORT, '\n');
+    irq_leave_protection(state);
 }
