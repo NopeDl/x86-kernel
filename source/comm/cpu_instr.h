@@ -98,14 +98,14 @@ static inline void write_tr(uint16_t tss_sel)
 static inline uint32_t read_eflags()
 {
     uint32_t ret = 0;
-    __asm__ __volatile__("pushf\n\tpop %%eax"
+    __asm__ __volatile__("pushfl\n\tpopl %%eax"
                          : "=a"(ret));
     return ret;
 }
 
 static inline void write_eflags(uint32_t state)
 {
-    __asm__ __volatile__("push %%eax\n\tpopf" ::"a"(state));
+    __asm__ __volatile__("pushl %%eax\n\tpopfl" ::"a"(state));
 }
 
 #endif
