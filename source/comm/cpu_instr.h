@@ -82,7 +82,7 @@ static inline void write_cr0(uint32_t data)
 static inline void far_jump(uint32_t selector, uint32_t offset)
 {
     uint32_t addr[] = {offset, selector};
-    __asm__ __volatile__("ljmpl *(%[a])" ::[a] "a"(addr));
+    __asm__ __volatile__("ljmpl *(%[a])" ::[a] "r"(addr));
 }
 
 static inline void hlt()
