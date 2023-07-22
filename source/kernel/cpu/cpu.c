@@ -71,7 +71,7 @@ void cpu_init()
     gdt_init();
 }
 
-void switch_tss(int sel)
+void switch_tss(uint32_t sel)
 {
     far_jump(sel, 0);
 }

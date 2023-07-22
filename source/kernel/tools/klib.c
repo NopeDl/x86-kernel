@@ -131,36 +131,54 @@ int kernel_memcmp(void *d1, void *d2, int size)
 
 void kernel_integer_to_str(char *str, int num, int x)
 {
-    static const char chars[] = {"0123456789ABCDEF"};
+    // 转换字符索引[-15, -14, ...-1, 0, 1, ...., 14, 15]
+    static const char *num2ch = {"FEDCBA9876543210123456789ABCDEF"};
     char *p = str;
-    char *start = str;
+    int old_num = num;
+
+    // 仅支持部分进制
     if ((x != 2) && (x != 8) && (x != 10) && (x != 16))
     {
         *p = '\0';
         return;
     }
 
-    if (num < 0 && x == 10)
+    // 只支持十进制负数
+    int signed_num = 0;
+    if ((num < 0) && (x == 10))
     {
         *p++ = '-';
-        start++;
-        num = -num;
+        signed_num = 1;
     }
 
-    while (num)
+    if (signed_num)
     {
-        *p++ = *(num % 10 + chars);
-        num /= 10;
+        do
+        {
+            char ch = num2ch[num % x + 15];
+            *p++ = ch;
+            num /= x;
+        } while (num);
+    }
+    else
+    {
+        uint32_t u_num = (uint32_t)num;
+        do
+        {
+            char ch = num2ch[u_num % x + 15];
+            *p++ = ch;
+            u_num /= x;
+        } while (u_num);
     }
     *p-- = '\0';
 
+    // 将转换结果逆序，生成最终的结果
+    char *start = (!signed_num) ? str : str + 1;
     while (start < p)
     {
-        char t = *start;
+        char ch = *start;
         *start = *p;
-        *p = t;
-
-        p--;
+        *p-- = ch;
         start++;
     }
 }
@@ -229,5 +247,4 @@ void pannic(const char *file, int line, const char *func, const char *cond)
     {
         hlt();
     }
-    
 }

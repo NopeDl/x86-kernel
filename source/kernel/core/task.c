@@ -42,8 +42,9 @@ int task_init(task_t *task, const char *name, uint32_t entry, uint32_t esp)
     kernel_strncpy(task->name, name, TASK_NAME_SIZE);
     task->state = TASK_CREATED;
 
-    task->time_ticks = TASK_TIME_SLICE_DEFAULT;
+    task->time_slice = TASK_TIME_SLICE_DEFAULT;
     task->slice_ticks = TASK_TIME_SLICE_DEFAULT;
+    task->sleep_ticks = 0;
 
     irq_state state = irq_enter_protection();
     task_set_ready(task);
@@ -78,7 +79,7 @@ void task_manager_init()
     // 各队列初始化
     list_init(&task_manager.ready_list);
     list_init(&task_manager.task_list);
-
+    list_init(&task_manager.sleep_list);
     task_manager.cur_task = (task_t *)0;
 }
 
@@ -92,6 +93,23 @@ void task_set_block(task_t *task)
 {
     list_remove(&task_manager.ready_list, &task->run_node);
     task->state = TASK_READY;
+}
+
+void task_set_sleep(task_t *task, uint32_t ticks)
+{
+    if (ticks <= 0)
+    {
+        return;
+    }
+
+    task->sleep_ticks = ticks;
+    task->state = TASK_SLEEP;
+    list_insert_last(&task_manager.sleep_list, &task->run_node);
+}
+
+void task_set_wakeup(task_t *task)
+{
+    list_remove(&task_manager.sleep_list, &task->run_node);
 }
 
 task_t *get_task_next_run()
@@ -120,34 +138,75 @@ int sys_sched_yield()
     return 0;
 }
 
-void task_dispatch()
+void task_dispatch(void)
 {
-    irq_state state = irq_enter_protection();
-    
     task_t *to = get_task_next_run();
-    task_t *from = get_task_cur();
-
-    if (to != from)
+    if (to != task_manager.cur_task)
     {
+        task_t *from = task_manager.cur_task;
         task_manager.cur_task = to;
+
         to->state = TASK_RUNNING;
         task_switch_from_to(from, to);
     }
+}
+
+void sys_msleep(uint32_t ms)
+{
+    // 至少延时1个tick
+    if (ms < OS_TICK_MS)
+    {
+        ms = OS_TICK_MS;
+    }
+
+    irq_state state = irq_enter_protection();
+
+    // 从就绪队列移除，加入睡眠队列
+    task_set_block(task_manager.cur_task);
+    task_set_sleep(task_manager.cur_task, (ms + (OS_TICK_MS - 1)) / OS_TICK_MS);
+
+    // 进行一次调度
+    task_dispatch();
 
     irq_leave_protection(state);
 }
 
 /**
  * 定时中断
-*/
-void task_time_tick()
+ */
+void task_time_tick(void)
 {
-    task_t *cur_task = get_task_cur();
-    if (--cur_task->slice_ticks == 0)
+    task_t *curr_task = get_task_cur();
+
+    // 时间片的处理
+    irq_state state = irq_enter_protection();
+    if (--curr_task->slice_ticks == 0)
     {
-        cur_task->slice_ticks = cur_task->time_ticks;
-        task_set_block(cur_task);
-        task_set_ready(cur_task);
-        task_dispatch();
+        // 时间片用完，重新加载时间片
+        // 对于空闲任务，此处减未用
+        curr_task->slice_ticks = curr_task->time_slice;
+
+        // 调整队列的位置到尾部，不用直接操作队列
+        task_set_block(curr_task);
+        task_set_ready(curr_task);
     }
+
+    // 睡眠处理
+    list_node_t *curr = list_first(&task_manager.sleep_list);
+    while (curr)
+    {
+        list_node_t *next = list_node_next(curr);
+
+        task_t *task = list_node_parent(curr, task_t, run_node);
+        if (--task->sleep_ticks == 0)
+        {
+            // 延时时间到达，从睡眠队列中移除，送至就绪队列
+            task_set_wakeup(task);
+            task_set_ready(task);
+        }
+        curr = next;
+    }
+
+    task_dispatch();
+    irq_leave_protection(state);
 }
