@@ -22,7 +22,8 @@ void init_task_entry(void) {
     int count = 0;
 
     for (;;) {
-        // log_printf("init task: %d", count++);
+        log_printf("init task: %d", count++);
+        sys_msleep(1000);
     }
 }
 
