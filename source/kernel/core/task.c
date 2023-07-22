@@ -138,21 +138,17 @@ int sys_sched_yield()
     return 0;
 }
 
-void task_dispatch()
+void task_dispatch(void)
 {
-    irq_state state = irq_enter_protection();
-
     task_t *to = get_task_next_run();
-    task_t *from = get_task_cur();
-
-    if (to != from)
+    if (to != task_manager.cur_task)
     {
+        task_t *from = task_manager.cur_task;
         task_manager.cur_task = to;
+
         to->state = TASK_RUNNING;
         task_switch_from_to(from, to);
     }
-
-    irq_leave_protection(state);
 }
 
 void sys_msleep(uint32_t ms)
