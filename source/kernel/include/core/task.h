@@ -38,6 +38,7 @@ typedef struct _task_manager_t
 {
     task_t *cur_task;
     task_t first_task; // 第一个任务(引导程序)
+    task_t idle_task; //空闲任务
     list_t ready_list; // 就绪队列
     list_t task_list;  // 所有进程
 	list_t sleep_list;          // 延时队列
