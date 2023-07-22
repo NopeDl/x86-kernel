@@ -14,6 +14,7 @@
         "irq.h": "c",
         "os_cfg.h": "c",
         "cpu_instr.h": "c",
-        "klib.h": "c"
+        "klib.h": "c",
+        "list.h": "c"
     },
 }
