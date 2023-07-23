@@ -7,12 +7,15 @@
 #include "tools/klib.h"
 #include "core/task.h"
 #include "comm/cpu_instr.h"
+#include "ipc/sem.h"
 
 
 static boot_info_t * init_boot_info;
 
 static uint32_t init_task_stack[1024];	// 空闲任务堆栈
 static task_t init_task;
+
+static sem_t sem;
 
 /**
  * 初始任务函数
@@ -22,8 +25,8 @@ void init_task_entry(void) {
     int count = 0;
 
     for (;;) {
+        sem_wait(&sem);
         log_printf("init task: %d", count++);
-        sys_msleep(1000);
     }
 }
 
@@ -51,10 +54,15 @@ void init_main()
      // 初始化任务
     task_init(&init_task, "init-task", (uint32_t)init_task_entry, (uint32_t)&init_task_stack[1024]);
     task_first_init();
+    
+    sem_init(&sem, 0);
+
     irq_enable_global();
     int count = 0;
     for (;;) {
         log_printf("first task: %d", count++);
-        sys_msleep(1000);
+        sem_notify(&sem);
+
+        sys_sleep(1000);
     }
 }
