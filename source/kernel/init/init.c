@@ -25,7 +25,6 @@ void init_task_entry(void) {
     int count = 0;
 
     for (;;) {
-        sem_wait(&sem);
         log_printf("init task: %d", count++);
     }
 }
@@ -61,8 +60,5 @@ void init_main()
     int count = 0;
     for (;;) {
         log_printf("first task: %d", count++);
-        sem_notify(&sem);
-
-        sys_sleep(1000);
     }
 }
