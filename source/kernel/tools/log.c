@@ -3,6 +3,9 @@
 #include "tools/klib.h"
 #include "comm/cpu_instr.h"
 #include "cpu/irq.h"
+#include "ipc/mutex.h"
+
+static mutex_t mutex;
 
 // 暂时使用串行接口方法
 void log_init()
@@ -16,6 +19,8 @@ void log_init()
     outb(COM1_PORT + 3, 0x03);
     outb(COM1_PORT + 2, 0xc7);
     outb(COM1_PORT + 4, 0x0f);
+
+    mutex_init(&mutex);
 }
 
 void log_printf(const char *msg, ...)
@@ -28,7 +33,7 @@ void log_printf(const char *msg, ...)
     kernel_vsprintf(str_buf, msg, args);
     va_end(args);
 
-    irq_state state = irq_enter_protection();
+    mutex_lock(&mutex);
     const char *p = str_buf;
     while (*p != '\0')
     {
@@ -40,5 +45,5 @@ void log_printf(const char *msg, ...)
     }
     outb(COM1_PORT, '\r');
     outb(COM1_PORT, '\n');
-    irq_leave_protection(state);
+    mutex_unlock(&mutex);
 }

@@ -2,8 +2,10 @@
 #include "os_cfg.h"
 #include "comm/cpu_instr.h"
 #include "cpu/irq.h"
+#include "ipc/mutex.h"
 
 static segment_desc_t gdt_table[GDT_TABLE_SIZE];
+static mutex_t mutex;
 
 void segment_desc_set(int selector, uint32_t base, uint32_t limit, uint16_t attr)
 {
@@ -33,16 +35,16 @@ void gate_desc_set(gate_desc_t* desc ,uint16_t selector, uint32_t offset, uint16
 
 int gdt_alloc_desc()
 {
-    irq_state state = irq_enter_protection();
+    mutex_lock(&mutex);
     for (int i = 1; i < GDT_TABLE_SIZE; i++)
     {
         if (gdt_table[i].attr == 0)
         {
-            irq_leave_protection(state);
+            mutex_unlock(&mutex);
             return i * sizeof(segment_desc_t);
         }
     }
-    irq_leave_protection(state);
+    mutex_unlock(&mutex);
     return -1;
 }
 
@@ -69,6 +71,7 @@ void gdt_init(){
 void cpu_init()
 {
     gdt_init();
+    mutex_init(&mutex);
 }
 
 void switch_tss(uint32_t sel)
