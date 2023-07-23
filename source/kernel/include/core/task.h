@@ -59,7 +59,7 @@ task_t *get_task_cur();
 
 int sys_sched_yield();
 void task_dispatch();
-void sys_msleep (uint32_t ms);
+void sys_sleep (uint32_t ms);
 
 /**
  * 定时中断处理

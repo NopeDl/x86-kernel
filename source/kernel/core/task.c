@@ -181,7 +181,7 @@ void task_dispatch(void)
     }
 }
 
-void sys_msleep(uint32_t ms)
+void sys_sleep(uint32_t ms)
 {
     // 至少延时1个tick
     if (ms < OS_TICK_MS)
