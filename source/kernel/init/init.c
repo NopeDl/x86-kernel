@@ -8,6 +8,7 @@
 #include "core/task.h"
 #include "comm/cpu_instr.h"
 #include "ipc/sem.h"
+#include "core/memory.h"
 
 
 static boot_info_t * init_boot_info;
@@ -36,6 +37,8 @@ void kernel_init(boot_info_t *boot_info)
 {
     ASSERT(boot_info->ram_region_count != 0);
     init_boot_info = boot_info;
+
+    memory_init(boot_info);
     log_init();
     cpu_init();
     irq_init();
