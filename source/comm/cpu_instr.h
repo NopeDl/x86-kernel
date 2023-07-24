@@ -79,11 +79,27 @@ static inline void write_cr0(uint32_t data)
     __asm__ __volatile__("mov %[v], %%cr0" ::[v] "a"(data));
 }
 
+
+static inline uint16_t read_cr3(void)
+{
+    uint32_t ret;
+    __asm__ __volatile__("mov %%cr3, %[v]"
+                         : [v] "=a"(ret));
+    return ret;
+}
+
+static inline void write_cr3(uint32_t data)
+{
+    __asm__ __volatile__("mov %[v], %%cr3" ::[v] "a"(data));
+}
+
 static inline void far_jump(uint32_t selector, uint32_t offset)
 {
     uint32_t addr[] = {offset, selector};
     __asm__ __volatile__("ljmpl *(%[a])" ::[a] "r"(addr));
 }
+
+
 
 static inline void hlt()
 {
