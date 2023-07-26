@@ -1,2 +1,2 @@
 # x86-kernel
-toy
+learning kernel.....
