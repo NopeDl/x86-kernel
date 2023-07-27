@@ -20,6 +20,17 @@ typedef struct
     uint32_t page_size;
 } addr_alloc_t;
 
+typedef struct
+{
+    void* vstart;//虚拟
+    void* vend;
+
+    void* pstart;//物理
+    uint32_t perm;//特权相关属性
+
+
+} memory_map_t;
+
 void show_mem_info(boot_info_t *boot_info);
 void memory_init(boot_info_t *boot_info);
 
