@@ -2,8 +2,10 @@
 #define MEMORY_H
 
 #define MEM_EXT_START (1024 * 1024)
+#define MEM_EXT_END (127 * 1024 * 1024)
 #define MEM_PAGE_SIZE 4096
 #define MEM_EBDA_START 0x80000
+#define MEM_TASK_BASE  0x80000000
 
 #include "comm/types.h"
 #include "comm/boot_info.h"
@@ -33,5 +35,7 @@ typedef struct
 
 void show_mem_info(boot_info_t *boot_info);
 void memory_init(boot_info_t *boot_info);
+
+uint32_t memory_create_uvm();
 
 #endif

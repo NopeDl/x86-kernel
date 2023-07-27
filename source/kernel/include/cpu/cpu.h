@@ -65,4 +65,6 @@ void cpu_init();
 int gdt_alloc_desc();
 void switch_tss(uint32_t sel);
 
+void gdt_free_sel(int sel);
+
 #endif

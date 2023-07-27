@@ -94,14 +94,14 @@ int memory_create_map(pde_t *page_dir, uint32_t vaddr, uint32_t paddr, int page_
 {
     for (int i = 0; i < page_count; i++)
     {
-        log_printf("create map: v-0x%x, p-0x%x, attr-0x%x", vaddr, paddr, attr);
+        // log_printf("create map: v-0x%x, p-0x%x, attr-0x%x", vaddr, paddr, attr);
         pte_t *pte = find_pte(page_dir, vaddr, 1);
         if (pte == (pte_t *)0)
         {
             log_printf("create pte failed, pte == 0");
             return -1;
         }
-        log_printf("pte addr: 0x%x", (uint32_t)pte);
+        // log_printf("pte addr: 0x%x", (uint32_t)pte);
         ASSERT(pte->present == 0);
         pte->v = paddr | attr | PTE_P;
 
@@ -117,6 +117,7 @@ void create_kernel_table()
         {kernel_base, s_text, kernel_base, PTE_W},
         {s_text, e_text, s_text, 0},
         {s_data, (void *)MEM_EBDA_START, s_data, PTE_W},
+        {(void *)MEM_EXT_START, (void *)MEM_EXT_END, (void *)MEM_EXT_START, PTE_W},
     };
 
     int len = sizeof(kernel_map) / sizeof(memory_map_t);
@@ -151,4 +152,24 @@ void memory_init(boot_info_t *boot_info)
 
     create_kernel_table();
     mmu_set_page_dir((uint32_t)kernel_page_dir);
+}
+
+uint32_t memory_create_uvm()
+{
+    pde_t *page_dir = (pde_t *)addr_alloc_page(&paddr_alloc, 1);
+    if (page_dir == 0)
+    {
+        return 0;
+    }
+    kernel_memset((void*)page_dir, 0, MEM_PAGE_SIZE);
+    uint32_t user_pde_start = pde_index(MEM_TASK_BASE);
+    //80000000以下
+    for (int i = 0; i < user_pde_start; i++)
+    {
+        page_dir[i].v = kernel_page_dir[i].v;
+    }
+    //以上....
+
+
+    return (uint32_t)page_dir;    
 }

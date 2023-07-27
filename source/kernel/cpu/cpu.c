@@ -78,3 +78,10 @@ void switch_tss(uint32_t sel)
 {
     far_jump(sel, 0);
 }
+
+void gdt_free_sel(int sel)
+{
+    mutex_lock(&mutex);
+    gdt_table[sel / sizeof(segment_desc_t)].attr = 0;
+    mutex_unlock(&mutex);
+}

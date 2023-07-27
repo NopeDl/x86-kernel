@@ -38,6 +38,14 @@ static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
     tp->es = tp->ds = tp->fs = tp->gs = KERNEL_SELECTOR_DS;
     tp->cs = KERNEL_SELECTOR_CS;
     tp->eflags = EFLAGS_DEFAULT | EFLAGS_IF;
+    uint32_t page_addr = memory_create_uvm();
+    if (page_addr == 0)
+    {
+        gdt_free_sel(tss_selector);
+        return -1;
+    }
+    
+    tp->cr3 = page_addr;
     task->tss_sel = tss_selector;
     return 0;
 }
