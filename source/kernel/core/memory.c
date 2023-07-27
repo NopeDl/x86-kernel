@@ -82,7 +82,7 @@ pte_t *find_pte(pde_t *page_dir, uint32_t vaddr, int auto_alloc)
         {
             return (pte_t *)0;
         }
-        pde->v = pg_paddr | PDE_P;
+        pde->v = pg_paddr | PDE_P | PDE_W | PDE_U;
 
         page_table = (pte_t *)pg_paddr;
         kernel_memset(page_table, 0, MEM_PAGE_SIZE);
@@ -114,9 +114,9 @@ void create_kernel_table()
 {
     extern uint8_t s_text[], e_text[], s_data[], kernel_base[];
     static memory_map_t kernel_map[] = {
-        {kernel_base, s_text, 0, 0},
+        {kernel_base, s_text, kernel_base, PTE_W},
         {s_text, e_text, s_text, 0},
-        {s_data, (void *)MEM_EBDA_START, s_data, 0},
+        {s_data, (void *)MEM_EBDA_START, s_data, PTE_W},
     };
 
     int len = sizeof(kernel_map) / sizeof(memory_map_t);
