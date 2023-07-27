@@ -6,6 +6,7 @@
 #include "comm/cpu_instr.h"
 #include "cpu/irq.h"
 #include "os_cfg.h"
+#include "cpu/mmu.h"
 
 static task_manager_t task_manager;
 
@@ -81,11 +82,15 @@ void task_switch_from_to(task_t *from, task_t *to)
 
 void task_first_init()
 {
-    task_init(&task_manager.first_task, "first-task", 0, 0);
+    void first_task_entry();
+    uint32_t first_start = (uint32_t)first_task_entry;
+    task_init(&task_manager.first_task, "first-task", first_start, 0);
 
     // 写TR寄存器，指示当前运行的第一个任务
     write_tr(task_manager.first_task.tss_sel);
     task_manager.cur_task = &task_manager.first_task;
+
+    mmu_set_page_dir(task_manager.first_task.tss.cr3);
 }
 
 task_t *get_first_task()
