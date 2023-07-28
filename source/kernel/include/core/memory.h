@@ -7,6 +7,7 @@
 #define MEM_EBDA_START 0x80000
 #define MEM_TASK_BASE 0x80000000
 
+
 #include "comm/types.h"
 #include "comm/boot_info.h"
 #include "tools/bitmap.h"
@@ -38,5 +39,8 @@ void memory_init(boot_info_t *boot_info);
 uint32_t memory_create_uvm();
 
 int memory_alloc_page_for(uint32_t addr, uint32_t size, int perm);
+
+uint32_t memory_alloc_page();
+void memory_free_page(uint32_t addr);
 
 #endif

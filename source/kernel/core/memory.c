@@ -199,7 +199,40 @@ int memory_alloc_page_for_page_dir(uint32_t page_dir, uint32_t vaddr, uint32_t s
     return 0;
 }
 
+/**
+ * 80000000以上
+ */
 int memory_alloc_page_for(uint32_t addr, uint32_t size, int perm)
 {
     return memory_alloc_page_for_page_dir(get_first_task()->tss.cr3, addr, size, perm);
+}
+
+/**
+ * 80000000以下
+ */
+uint32_t memory_alloc_page()
+{
+    return addr_alloc_page(&paddr_alloc, 1);
+}
+
+static pde_t *cur_page_dir()
+{
+    return (pde_t *)(get_task_cur()->tss.cr3);
+}
+
+
+void memory_free_page(uint32_t addr)
+{
+    if (addr < MEM_TASK_BASE)
+    {
+        addr_free_page(&paddr_alloc, addr, 1);
+    }
+    else
+    {
+        pte_t *pte = find_pte(cur_page_dir(), addr, 0);
+        ASSERT((pte != (pte_t *)0) && pte->present);
+
+        addr_free_page(&paddr_alloc, pte_paddr(pte), 1);
+        pte->v = 0;
+    }
 }

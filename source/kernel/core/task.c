@@ -30,6 +30,13 @@ static int tss_init(task_t *task, int flags, uint32_t entry, uint32_t esp)
         return -1;
     }
 
+    uint32_t kernel_stack = memory_alloc_page();
+    if (kernel_stack == 0)
+    {
+        goto tss_init_failed;
+    }
+    
+
     int code_sel, data_sel;
     if (flags & TASK_FLAGS_SYSTEM)
     {
@@ -47,7 +54,8 @@ static int tss_init(task_t *task, int flags, uint32_t entry, uint32_t esp)
                      SEG_P_PRESENT | SEG_DPL0 | SEG_TYPE_TSS);
 
     kernel_memset(tp, 0, sizeof(tss_t));
-    tp->esp = tp->esp0 = esp;
+    tp->esp = esp;
+    tp->esp0 = kernel_stack + MEM_PAGE_SIZE;
     tp->eip = entry;
     tp->ss = data_sel;
     tp->ss0 = KERNEL_SELECTOR_DS;
@@ -57,13 +65,22 @@ static int tss_init(task_t *task, int flags, uint32_t entry, uint32_t esp)
     uint32_t page_addr = memory_create_uvm();
     if (page_addr == 0)
     {
-        gdt_free_sel(tss_selector);
-        return -1;
+        goto tss_init_failed;
     }
 
     tp->cr3 = page_addr;
     task->tss_sel = tss_selector;
     return 0;
+
+tss_init_failed:
+    gdt_free_sel(tss_selector);
+    if (kernel_stack != 0)
+    {
+        memory_free_page(kernel_stack);
+    }
+    
+    return -1;
+
 }
 
 int task_init(task_t *task, const char *name, int flags, uint32_t entry, uint32_t esp)
@@ -105,7 +122,7 @@ void task_first_init()
     ASSERT(copy_size < alloc_size);
 
     uint32_t first_start = (uint32_t)first_task_entry;
-    task_init(&task_manager.first_task, "first-task", 0, first_start, 0);
+    task_init(&task_manager.first_task, "first-task", 0, first_start, first_start + alloc_size);
 
     // 写TR寄存器，指示当前运行的第一个任务
     write_tr(task_manager.first_task.tss_sel);
@@ -113,7 +130,7 @@ void task_first_init()
 
     mmu_set_page_dir(task_manager.first_task.tss.cr3);
 
-    memory_alloc_page_for(first_start, alloc_size, PTE_P | PTE_W);
+    memory_alloc_page_for(first_start, alloc_size, PTE_P | PTE_W | PTE_U);
     kernel_memcpy((void *)first_start, (void *)s_first_task, copy_size);
 }
 
