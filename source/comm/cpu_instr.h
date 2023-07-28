@@ -66,7 +66,7 @@ static inline void lidt(uint32_t begin, uint32_t size)
     __asm__ __volatile__("lidt %[g]" ::[g] "m"(idt));
 }
 
-static inline uint16_t read_cr0(void)
+static inline uint32_t read_cr0(void)
 {
     uint32_t ret;
     __asm__ __volatile__("mov %%cr0, %[v]"
@@ -79,8 +79,16 @@ static inline void write_cr0(uint32_t data)
     __asm__ __volatile__("mov %[v], %%cr0" ::[v] "a"(data));
 }
 
+static inline uint32_t read_cr2(void)
+{
+    uint32_t ret;
+    __asm__ __volatile__("mov %%cr2, %[v]"
+                         : [v] "=a"(ret));
+    return ret;
+}
 
-static inline uint16_t read_cr3(void)
+
+static inline uint32_t read_cr3(void)
 {
     uint32_t ret;
     __asm__ __volatile__("mov %%cr3, %[v]"
@@ -93,7 +101,7 @@ static inline void write_cr3(uint32_t data)
     __asm__ __volatile__("mov %[v], %%cr3" ::[v] "a"(data));
 }
 
-static inline uint16_t read_cr4(void)
+static inline uint32_t read_cr4(void)
 {
     uint32_t ret;
     __asm__ __volatile__("mov %%cr4, %[v]"

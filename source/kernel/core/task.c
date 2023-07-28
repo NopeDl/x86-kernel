@@ -41,7 +41,8 @@ static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
     kernel_memset(tp, 0, sizeof(tss_t));
     tp->esp = tp->esp0 = esp;
     tp->eip = entry;
-    tp->ss = tp->ss0 = data_sel;
+    tp->ss = data_sel;
+    tp->ss0 = KERNEL_SELECTOR_DS;
     tp->es = tp->ds = tp->fs = tp->gs = data_sel;
     tp->cs = code_sel;
     tp->eflags = EFLAGS_DEFAULT | EFLAGS_IF;

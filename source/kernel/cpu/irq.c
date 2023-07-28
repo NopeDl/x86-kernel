@@ -8,22 +8,33 @@
 
 static gate_desc_t idt_table[IDT_TABLE_NR];
 
-static void dump_core_regs (excption_frame_t * frame) {
+static void dump_core_regs(excption_frame_t *frame)
+{
     // 打印CPU寄存器相关内容
+    uint32_t esp, ss;
+    if (frame->cs & 0x7)
+    {
+        ss = frame->ds;
+        esp = frame->esp;
+    }
+    else
+    {
+        ss = frame->ss3;
+        esp = frame->esp3;
+    }
     log_printf("IRQ: %d, error code: %d.", frame->num, frame->code);
     log_printf("CS: %d\nDS: %d\nES: %d\nSS: %d\nFS:%d\nGS:%d",
-               frame->cs, frame->ds, frame->es, frame->ds, frame->fs, frame->gs
-    );
+               frame->cs, frame->ds, frame->es, ss, frame->fs, frame->gs);
     log_printf("EAX:0x%x\n"
-                "EBX:0x%x\n"
-                "ECX:0x%x\n"
-                "EDX:0x%x\n"
-                "EDI:0x%x\n"
-                "ESI:0x%x\n"
-                "EBP:0x%x\n"
-                "ESP:0x%x\n",
+               "EBX:0x%x\n"
+               "ECX:0x%x\n"
+               "EDX:0x%x\n"
+               "EDI:0x%x\n"
+               "ESI:0x%x\n"
+               "EBP:0x%x\n"
+               "ESP:0x%x\n",
                frame->eax, frame->ebx, frame->ecx, frame->edx,
-               frame->edi, frame->esi, frame->ebp, frame->esp);
+               frame->edi, frame->esi, frame->ebp, esp);
     log_printf("EIP:0x%x\nEFLAGS:0x%x\n", frame->eip, frame->eflags);
 }
 
@@ -103,12 +114,68 @@ void do_handle_stack_seg_fault(excption_frame_t *frame)
 
 void do_handle_general_protection(excption_frame_t *frame)
 {
-    do_default_handle(frame, "general_protection exception");
+    log_printf("--------------------------------");
+    log_printf("IRQ/Exception happend: General Protection.");
+    if (frame->code & ERR_EXT) {
+        log_printf("the exception occurred during delivery of an "
+                "event external to the program, such as an interrupt"
+                "or an earlier exception.");
+    } else {
+        log_printf("the exception occurred during delivery of a"
+                    "software interrupt (INT n, INT3, or INTO).");
+    }
+    
+    if (frame->code & ERR_IDT) {
+        log_printf("the index portion of the error code refers "
+                    "to a gate descriptor in the IDT");
+    } else {
+        log_printf("the index refers to a descriptor in the GDT");
+    }
+    
+    log_printf("segment index: %d", frame->code & 0xFFF8);
+
+    dump_core_regs(frame);
+    while (1) {
+        hlt();
+    }	
 }
 
 void do_handle_page_fault(excption_frame_t *frame)
 {
-    do_default_handle(frame, "page_fault exception");
+    log_printf("--------------------------------");
+    log_printf("IRQ/Exception happend: Page fault.");
+    if (frame->code & ERR_PAGE_P)
+    {
+        log_printf("\tpage-level protection violation: 0x%x.", read_cr2());
+    }
+    else
+    {
+        log_printf("\tPage doesn't present 0x%x", read_cr2());
+    }
+
+    if (frame->code & ERR_PAGE_WR)
+    {
+        log_printf("\tThe access causing the fault was a read.");
+    }
+    else
+    {
+        log_printf("\tThe access causing the fault was a write.");
+    }
+
+    if (frame->code & ERR_PAGE_US)
+    {
+        log_printf("\tA supervisor-mode access caused the fault.");
+    }
+    else
+    {
+        log_printf("\tA user-mode access caused the fault.");
+    }
+
+    dump_core_regs(frame);
+    while (1)
+    {
+        hlt();
+    }
 }
 
 void do_handle_math_fault(excption_frame_t *frame)
@@ -272,7 +339,6 @@ void pic_send_eoi(int irq_num)
     }
     outb(PIC0_OCW2, PIC_OCW2_EOI);
 }
-
 
 irq_state irq_enter_protection()
 {
