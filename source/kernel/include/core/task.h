@@ -43,6 +43,9 @@ typedef struct _task_manager_t
     list_t ready_list; // 就绪队列
     list_t task_list;  // 所有进程
 	list_t sleep_list;          // 延时队列
+
+    int app_code_sel;
+    int app_data_sel;
 } task_manager_t;
 
 void task_manager_init();

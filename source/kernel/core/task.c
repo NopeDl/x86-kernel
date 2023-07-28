@@ -29,6 +29,11 @@ static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
         log_printf("alloc tss failed....");
         return -1;
     }
+
+    int code_sel, data_sel;
+    code_sel = task_manager.app_code_sel | SEG_CPL3;
+    data_sel = task_manager.app_data_sel | SEG_CPL3;
+
     tss_t *tp = &task->tss;
     segment_desc_set(tss_selector, (uint32_t)tp, sizeof(tss_t),
                      SEG_P_PRESENT | SEG_DPL0 | SEG_TYPE_TSS);
@@ -36,9 +41,9 @@ static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
     kernel_memset(tp, 0, sizeof(tss_t));
     tp->esp = tp->esp0 = esp;
     tp->eip = entry;
-    tp->ss = tp->ss0 = KERNEL_SELECTOR_DS;
-    tp->es = tp->ds = tp->fs = tp->gs = KERNEL_SELECTOR_DS;
-    tp->cs = KERNEL_SELECTOR_CS;
+    tp->ss = tp->ss0 = data_sel;
+    tp->es = tp->ds = tp->fs = tp->gs = data_sel;
+    tp->cs = code_sel;
     tp->eflags = EFLAGS_DEFAULT | EFLAGS_IF;
     uint32_t page_addr = memory_create_uvm();
     if (page_addr == 0)
@@ -89,7 +94,7 @@ void task_first_init()
     uint32_t copy_size = (uint32_t)(e_first_task - s_first_task);
     uint32_t alloc_size = 10 * MEM_PAGE_SIZE;
     ASSERT(copy_size < alloc_size);
-    
+
     uint32_t first_start = (uint32_t)first_task_entry;
     task_init(&task_manager.first_task, "first-task", first_start, 0);
 
@@ -100,7 +105,7 @@ void task_first_init()
     mmu_set_page_dir(task_manager.first_task.tss.cr3);
 
     memory_alloc_page_for(first_start, alloc_size, PTE_P | PTE_W);
-    kernel_memcpy(first_start, s_first_task, copy_size);
+    kernel_memcpy((void *)first_start, (void *)s_first_task, copy_size);
 }
 
 task_t *get_first_task()
@@ -110,6 +115,16 @@ task_t *get_first_task()
 
 void task_manager_init()
 {
+    int sel = gdt_alloc_desc();
+    segment_desc_set(sel, 0x00000000, 0xffffffff,
+                     SEG_P_PRESENT | SEG_DPL3 | SEG_S_NORMAL | SEG_TYPE_DATA | SEG_TYPE_RW | SEG_D);
+    task_manager.app_data_sel = sel;
+
+    sel = gdt_alloc_desc();
+    segment_desc_set(sel, 0x00000000, 0xffffffff,
+                     SEG_P_PRESENT | SEG_DPL3 | SEG_S_NORMAL | SEG_TYPE_CODE | SEG_TYPE_RW | SEG_D);
+    task_manager.app_code_sel = sel;
+
     // 各队列初始化
     list_init(&task_manager.ready_list);
     list_init(&task_manager.task_list);
