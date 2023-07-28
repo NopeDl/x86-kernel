@@ -161,15 +161,45 @@ uint32_t memory_create_uvm()
     {
         return 0;
     }
-    kernel_memset((void*)page_dir, 0, MEM_PAGE_SIZE);
+    kernel_memset((void *)page_dir, 0, MEM_PAGE_SIZE);
     uint32_t user_pde_start = pde_index(MEM_TASK_BASE);
-    //80000000以下
+    // 80000000以下
     for (int i = 0; i < user_pde_start; i++)
     {
         page_dir[i].v = kernel_page_dir[i].v;
     }
-    //以上....
+    // 以上....
 
+    return (uint32_t)page_dir;
+}
 
-    return (uint32_t)page_dir;    
+int memory_alloc_page_for_page_dir(uint32_t page_dir, uint32_t vaddr, uint32_t size, int perm)
+{
+    uint32_t cur_vaddr = vaddr;
+    int page_count = up2(size, MEM_PAGE_SIZE) / MEM_PAGE_SIZE;
+
+    for (int i = 0; i < page_count; i++)
+    {
+        uint32_t paddr = addr_alloc_page(&paddr_alloc, 1);
+        if (paddr == 0)
+        {
+            log_printf("mem alloc failed......");
+            return 0;
+        }
+
+        int err = memory_create_map((pde_t *)page_dir, cur_vaddr, paddr, 1, perm);
+        if (err < 0)
+        {
+            log_printf("create mem failed......");
+            return 0;
+        }
+
+        cur_vaddr += MEM_PAGE_SIZE;
+    }
+    return 0;
+}
+
+int memory_alloc_page_for(uint32_t addr, uint32_t size, int perm)
+{
+    return memory_alloc_page_for_page_dir(get_first_task()->tss.cr3, addr, size, perm);
 }

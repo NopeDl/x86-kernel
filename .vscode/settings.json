@@ -15,6 +15,7 @@
         "os_cfg.h": "c",
         "cpu_instr.h": "c",
         "klib.h": "c",
-        "list.h": "c"
+        "list.h": "c",
+        "mmu.h": "c"
     },
 }

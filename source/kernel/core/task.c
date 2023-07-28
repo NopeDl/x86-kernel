@@ -7,6 +7,7 @@
 #include "cpu/irq.h"
 #include "os_cfg.h"
 #include "cpu/mmu.h"
+#include "core/memory.h"
 
 static task_manager_t task_manager;
 
@@ -45,7 +46,7 @@ static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
         gdt_free_sel(tss_selector);
         return -1;
     }
-    
+
     tp->cr3 = page_addr;
     task->tss_sel = tss_selector;
     return 0;
@@ -82,7 +83,13 @@ void task_switch_from_to(task_t *from, task_t *to)
 
 void task_first_init()
 {
+    extern uint8_t s_first_task[], e_first_task[];
     void first_task_entry();
+
+    uint32_t copy_size = (uint32_t)(e_first_task - s_first_task);
+    uint32_t alloc_size = 10 * MEM_PAGE_SIZE;
+    ASSERT(copy_size < alloc_size);
+    
     uint32_t first_start = (uint32_t)first_task_entry;
     task_init(&task_manager.first_task, "first-task", first_start, 0);
 
@@ -91,6 +98,9 @@ void task_first_init()
     task_manager.cur_task = &task_manager.first_task;
 
     mmu_set_page_dir(task_manager.first_task.tss.cr3);
+
+    memory_alloc_page_for(first_start, alloc_size, PTE_P | PTE_W);
+    kernel_memcpy(first_start, s_first_task, copy_size);
 }
 
 task_t *get_first_task()
