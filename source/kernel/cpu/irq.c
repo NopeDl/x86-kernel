@@ -155,20 +155,20 @@ void do_handle_page_fault(excption_frame_t *frame)
 
     if (frame->code & ERR_PAGE_WR)
     {
-        log_printf("\tThe access causing the fault was a read.");
+        log_printf("\tThe access causing the fault was a write.");
     }
     else
     {
-        log_printf("\tThe access causing the fault was a write.");
+        log_printf("\tThe access causing the fault was a read.");
     }
 
     if (frame->code & ERR_PAGE_US)
     {
-        log_printf("\tA supervisor-mode access caused the fault.");
+        log_printf("\tA user-mode access caused the fault.");
     }
     else
     {
-        log_printf("\tA user-mode access caused the fault.");
+        log_printf("\tA supervisor-mode access caused the fault.");
     }
 
     dump_core_regs(frame);
