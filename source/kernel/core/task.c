@@ -93,7 +93,7 @@ int task_init(task_t *task, const char *name, int flags, uint32_t entry, uint32_
 
     kernel_strncpy(task->name, name, TASK_NAME_SIZE);
     task->state = TASK_CREATED;
-
+    task->pid = (uint32_t)task;
     task->time_slice = TASK_TIME_SLICE_DEFAULT;
     task->slice_ticks = TASK_TIME_SLICE_DEFAULT;
     task->sleep_ticks = 0;
@@ -304,4 +304,9 @@ void task_time_tick(void)
 
     task_dispatch();
     irq_leave_protection(state);
+}
+
+int sys_get_pid()
+{
+    return get_task_cur()->pid;
 }

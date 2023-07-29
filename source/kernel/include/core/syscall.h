@@ -14,6 +14,7 @@ typedef struct
 }syscall_frame_t;
 
 #define SYS_SLEEP 0
+#define GET_PID   1 
 
 
 void exception_handler_syscall();

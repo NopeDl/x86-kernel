@@ -21,6 +21,7 @@ typedef struct _task_t
     } state;
 
     char name[TASK_NAME_SIZE]; // 任务名字
+    int pid;
 
     int sleep_ticks; // 睡眠时间
     int time_slice;  // 时间片
@@ -70,5 +71,7 @@ void sys_sleep(uint32_t ms);
  * 定时中断处理
  */
 void task_time_tick();
+
+int sys_get_pid();
 
 #endif
