@@ -27,8 +27,9 @@ static inline int sys_call(syscall_args_t *args)
         "push %[arg1]\n\t"
         "push %[arg0]\n\t"
         "push %[id]\n\t"
-        "lcalll *(%[a])" 
-        :"=a"(ret):
+        "lcalll *(%[a])"
+        : "=a"(ret)
+        :
         [arg3] "r"(args->arg3),
         [arg2] "r"(args->arg2),
         [arg1] "r"(args->arg1),
@@ -57,6 +58,16 @@ static inline int get_pid()
     syscall_args_t args;
     args.id = GET_PID;
     return sys_call(&args);
+}
+
+static inline void simple_printf(const char *msg, int arg1)
+{
+    syscall_args_t args;
+    args.id = SIMPLE_PRINTF;
+    args.arg0 = (int)msg;
+    args.arg1 = arg1;
+    sys_call(&args);
+    return;
 }
 
 #endif

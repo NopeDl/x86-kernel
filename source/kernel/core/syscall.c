@@ -8,6 +8,7 @@ typedef int (*syscall_handle_t)(uint32_t arg0, uint32_t arg1, uint32_t arg2, uin
 static const syscall_handle_t sys_func_table[] = {
     [SYS_SLEEP] = (syscall_handle_t)sys_sleep,
     [GET_PID] = (syscall_handle_t)sys_get_pid,
+    [SIMPLE_PRINTF] = (syscall_handle_t)log_printf,
 };
 
 void do_handler_syscall(syscall_frame_t *frame)

@@ -6,5 +6,6 @@ int first_task_main()
     {
         int ret = get_pid();
         msleep(1000);
+        simple_printf("pid: %d", ret);
     }
 }
