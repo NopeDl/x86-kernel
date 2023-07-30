@@ -310,3 +310,8 @@ int sys_get_pid()
 {
     return get_task_cur()->pid;
 }
+
+int sys_fork()
+{
+    return -1;
+}

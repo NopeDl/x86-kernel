@@ -60,6 +60,13 @@ static inline int get_pid()
     return sys_call(&args);
 }
 
+static inline int fork()
+{
+    syscall_args_t args;
+    args.id = SYS_FORK;
+    return sys_call(&args);
+}
+
 static inline void simple_printf(const char *msg, int arg1)
 {
     syscall_args_t args;

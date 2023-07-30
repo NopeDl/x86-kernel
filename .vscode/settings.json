@@ -1,7 +1,7 @@
 {
     "cmake.configureOnOpen": false,
     "cmake.sourceDirectory": "${workspaceFolder}/.",
-    "C_Cpp.errorSquiggles": "Disabled",
+    "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
         "dirent.h": "c",
         "lib_syscall.h": "c",
@@ -16,6 +16,7 @@
         "cpu_instr.h": "c",
         "klib.h": "c",
         "list.h": "c",
-        "mmu.h": "c"
+        "mmu.h": "c",
+        "syscall.h": "c"
     },
 }

@@ -74,4 +74,6 @@ void task_time_tick();
 
 int sys_get_pid();
 
+int sys_fork();
+
 #endif

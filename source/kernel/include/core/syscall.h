@@ -16,6 +16,7 @@ typedef struct
 #define SYS_SLEEP 0
 #define GET_PID   1 
 #define SIMPLE_PRINTF   2 
+#define SYS_FORK   3 
 
 
 void exception_handler_syscall();
