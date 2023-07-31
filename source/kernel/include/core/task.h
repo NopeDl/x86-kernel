@@ -19,7 +19,8 @@ typedef struct _task_t {
     } state;
 
     char name[TASK_NAME_SIZE]; // 任务名字
-    int pid;
+    int pid; // 当前进程id
+    struct _task_t* parent; // 父进程
 
     int sleep_ticks; // 睡眠时间
     int time_slice; // 时间片

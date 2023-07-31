@@ -2,9 +2,27 @@
 
 int first_task_main()
 {
-    while (1) {
-        int ret = get_pid();
-        msleep(1000);
-        simple_printf("pid: %d", ret);
+    int count = 3;
+
+    int pid = get_pid();
+    simple_printf("first task id = %d\n", pid);
+
+    pid = fork();
+    if (pid < 0) {
+        simple_printf("create child proc failed\n", 0);
+    } else if (pid == 0) {
+        simple_printf("child: %d\n", count);
+    } else {
+        simple_printf("child task id = %d\n", pid);
+        simple_printf("parent: %d\n", count);
     }
+
+    while (1)
+    {
+        simple_printf("task id: %d", pid);
+        msleep(1000);
+    }
+    
+
+    return 0;
 }
