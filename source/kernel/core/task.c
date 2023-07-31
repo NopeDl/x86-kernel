@@ -111,7 +111,7 @@ void task_uninit(task_t* task)
     }
     if (task->tss.cr3) {
         memory_destroy_uvm(task->tss.cr3);
-    }   
+    }
 
     kernel_memset(task, 0, sizeof(task_t));
 }
@@ -368,8 +368,7 @@ int sys_fork()
     tss->eflags = frame->eflags;
 
     child_task->parent = parent_task;
-    if ((tss->cr3 = memory_copy_uvm(parent_task->tss.cr3)) < 0)
-    {
+    if ((tss->cr3 = memory_copy_uvm(parent_task->tss.cr3)) < 0) {
         goto fork_failed;
     }
 
@@ -381,5 +380,10 @@ fork_failed:
         free_task(child_task);
     }
 
+    return -1;
+}
+
+int sys_execve(const char* filename, char* const argv[], char* const envp[])
+{
     return -1;
 }

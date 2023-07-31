@@ -9,6 +9,7 @@ static const syscall_handle_t sys_func_table[] = {
     [SYS_SLEEP] = (syscall_handle_t)sys_sleep,
     [GET_PID] = (syscall_handle_t)sys_get_pid,
     [SYS_FORK] = (syscall_handle_t)sys_fork,
+    [SYS_EXECVE] = (syscall_handle_t)sys_execve,
     [SIMPLE_PRINTF] = (syscall_handle_t)log_printf,
 };
 

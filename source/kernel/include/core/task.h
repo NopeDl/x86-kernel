@@ -74,4 +74,5 @@ int sys_get_pid();
 
 int sys_fork();
 
+int sys_execve(const char* filename, char* const argv[], char* const envp[]);
 #endif

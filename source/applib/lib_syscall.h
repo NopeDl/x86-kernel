@@ -2,11 +2,10 @@
 #define LIB_SYSCALL_H
 
 #include "comm/types.h"
-#include "os_cfg.h"
 #include "core/syscall.h"
+#include "os_cfg.h"
 
-typedef struct _syscall_args_t
-{
+typedef struct _syscall_args_t {
     // 函数id
     int id;
     // 参数
@@ -16,9 +15,9 @@ typedef struct _syscall_args_t
     int arg3;
 } syscall_args_t;
 
-static inline int sys_call(syscall_args_t *args)
+static inline int sys_call(syscall_args_t* args)
 {
-    uint32_t addr[] = {0, SELECTOR_SYSCALL | 0};
+    uint32_t addr[] = { 0, SELECTOR_SYSCALL | 0 };
     int ret;
 
     __asm__ __volatile__(
@@ -42,8 +41,7 @@ static inline int sys_call(syscall_args_t *args)
 
 static inline void msleep(int ms)
 {
-    if (ms <= 0)
-    {
+    if (ms <= 0) {
         return;
     }
     syscall_args_t args;
@@ -67,7 +65,23 @@ static inline int fork()
     return sys_call(&args);
 }
 
-static inline void simple_printf(const char *msg, int arg1)
+/**
+ * 被用于在一个正在运行的进程内部加载另一个可执行程序，并替换当前进程的执行映像
+ * @param filename 文件路径
+ * @param argv 参数
+ * @param envp 环境变量
+ */
+static inline int execve(const char* filename, char* const argv[], char* const envp[])
+{
+    syscall_args_t args;
+    args.id = SYS_EXECVE;
+    args.arg0 = (int)filename;
+    args.arg1 = (int)argv;
+    args.arg2 = (int)envp;
+    return sys_call(&args);
+}
+
+static inline void simple_printf(const char* msg, int arg1)
 {
     syscall_args_t args;
     args.id = SIMPLE_PRINTF;
