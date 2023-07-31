@@ -383,7 +383,41 @@ fork_failed:
     return -1;
 }
 
+//todo
+static uint32_t load_elf_file(task_t* task, const char* filename, uint32_t page_dir)
+{
+    return 0;
+}
+
 int sys_execve(const char* filename, char* const argv[], char* const envp[])
 {
+    task_t* task = get_task_cur();
+
+    uint32_t old_page_dir = task->tss.cr3;
+    uint32_t new_page_dir = memory_create_uvm();
+    if (!new_page_dir) {
+        goto exec_failed;
+    }
+
+    uint32_t entry = load_elf_file(task, filename, new_page_dir);
+    if (entry == 0) {
+        goto exec_failed;
+    }
+
+    task->tss.cr3 = new_page_dir;
+    // 刷到cr3中
+    mmu_set_page_dir(new_page_dir);
+
+    memory_destroy_uvm(old_page_dir);
+
+    return 0;
+
+exec_failed:
+    if (new_page_dir) {
+        task->tss.cr3 = old_page_dir;
+        mmu_set_page_dir(old_page_dir);
+        memory_destroy_uvm(new_page_dir);
+    }
+
     return -1;
 }
