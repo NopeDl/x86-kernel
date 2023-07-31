@@ -1,13 +1,14 @@
 #include "core/memory.h"
-#include "tools/log.h"
-#include "tools/klib.h"
+
 #include "cpu/mmu.h"
+#include "tools/klib.h"
+#include "tools/log.h"
 
 static addr_alloc_t paddr_alloc;
 
 static pde_t kernel_page_dir[PDE_CNT] __attribute__((aligned(MEM_PAGE_SIZE)));
 
-static void addr_alloc_init(addr_alloc_t *alloc, uint8_t *bits, uint32_t start, uint32_t size, uint32_t page_size)
+static void addr_alloc_init(addr_alloc_t* alloc, uint8_t* bits, uint32_t start, uint32_t size, uint32_t page_size)
 {
     mutex_init(&alloc->mutex);
     alloc->start = start;
@@ -16,15 +17,14 @@ static void addr_alloc_init(addr_alloc_t *alloc, uint8_t *bits, uint32_t start, 
     bitmap_init(&alloc->bitmap, bits, alloc->size / page_size, 0);
 }
 
-static uint32_t addr_alloc_page(addr_alloc_t *alloc, int page_count)
+static uint32_t addr_alloc_page(addr_alloc_t* alloc, int page_count)
 {
     uint32_t addr = 0;
 
     mutex_lock(&alloc->mutex);
 
     int page_idx = bitmap_alloc_nbits(&alloc->bitmap, 0, page_count);
-    if (page_idx >= 0)
-    {
+    if (page_idx >= 0) {
         addr = alloc->start + page_idx * alloc->page_size;
     }
 
@@ -32,7 +32,7 @@ static uint32_t addr_alloc_page(addr_alloc_t *alloc, int page_count)
     return addr;
 }
 
-static void addr_free_page(addr_alloc_t *alloc, uint32_t addr, int page_count)
+static void addr_free_page(addr_alloc_t* alloc, uint32_t addr, int page_count)
 {
     mutex_lock(&alloc->mutex);
     uint32_t pg_idx = (addr - alloc->start) / alloc->page_size;
@@ -40,64 +40,52 @@ static void addr_free_page(addr_alloc_t *alloc, uint32_t addr, int page_count)
     mutex_unlock(&alloc->mutex);
 }
 
-void show_mem_info(boot_info_t *boot_info)
+void show_mem_info(boot_info_t* boot_info)
 {
     log_printf("memory region: ");
-    for (int i = 0; i < boot_info->ram_region_count; i++)
-    {
-        log_printf("[%d]: 0x%x - 0x%x",
-                   i,
-                   boot_info->ram_region_cfg[i].start,
-                   boot_info->ram_region_cfg[i].size);
+    for (int i = 0; i < boot_info->ram_region_count; i++) {
+        log_printf("[%d]: 0x%x - 0x%x", i, boot_info->ram_region_cfg[i].start, boot_info->ram_region_cfg[i].size);
     }
     log_printf("\n");
 }
 
-static uint32_t total_mem_size(boot_info_t *boot_info)
+static uint32_t total_mem_size(boot_info_t* boot_info)
 {
     uint32_t mem_size = 0;
-    for (int i = 0; i < boot_info->ram_region_count; i++)
-    {
+    for (int i = 0; i < boot_info->ram_region_count; i++) {
         mem_size += boot_info->ram_region_cfg[i].size;
     }
     return mem_size;
 }
 
-pte_t *find_pte(pde_t *page_dir, uint32_t vaddr, int auto_alloc)
+pte_t* find_pte(pde_t* page_dir, uint32_t vaddr, int auto_alloc)
 {
-    pte_t *page_table;
-    pde_t *pde = page_dir + pde_index(vaddr);
-    if (pde->present)
-    {
-        page_table = (pte_t *)pde_paddr(pde);
-    }
-    else
-    {
-        if (auto_alloc == 0)
-        {
-            return (pte_t *)0;
+    pte_t* page_table;
+    pde_t* pde = page_dir + pde_index(vaddr);
+    if (pde->present) {
+        page_table = (pte_t*)pde_paddr(pde);
+    } else {
+        if (auto_alloc == 0) {
+            return (pte_t*)0;
         }
         uint32_t pg_paddr = addr_alloc_page(&paddr_alloc, 1);
-        if (pg_paddr == 0)
-        {
-            return (pte_t *)0;
+        if (pg_paddr == 0) {
+            return (pte_t*)0;
         }
         pde->v = pg_paddr | PDE_P | PDE_W | PDE_U;
 
-        page_table = (pte_t *)pg_paddr;
+        page_table = (pte_t*)pg_paddr;
         kernel_memset(page_table, 0, MEM_PAGE_SIZE);
     }
     return page_table + pte_index(vaddr);
 }
 
-int memory_create_map(pde_t *page_dir, uint32_t vaddr, uint32_t paddr, int page_count, uint32_t attr)
+int memory_create_map(pde_t* page_dir, uint32_t vaddr, uint32_t paddr, int page_count, uint32_t attr)
 {
-    for (int i = 0; i < page_count; i++)
-    {
+    for (int i = 0; i < page_count; i++) {
         // log_printf("create map: v-0x%x, p-0x%x, attr-0x%x", vaddr, paddr, attr);
-        pte_t *pte = find_pte(page_dir, vaddr, 1);
-        if (pte == (pte_t *)0)
-        {
+        pte_t* pte = find_pte(page_dir, vaddr, 1);
+        if (pte == (pte_t*)0) {
             log_printf("create pte failed, pte == 0");
             return -1;
         }
@@ -114,16 +102,15 @@ void create_kernel_table()
 {
     extern uint8_t s_text[], e_text[], s_data[], kernel_base[];
     static memory_map_t kernel_map[] = {
-        {kernel_base, s_text, kernel_base, PTE_W},
-        {s_text, e_text, s_text, 0},
-        {s_data, (void *)MEM_EBDA_START, s_data, PTE_W},
-        {(void *)MEM_EXT_START, (void *)MEM_EXT_END, (void *)MEM_EXT_START, PTE_W},
+        { kernel_base, s_text, kernel_base, PTE_W },
+        { s_text, e_text, s_text, 0 },
+        { s_data, (void*)MEM_EBDA_START, s_data, PTE_W },
+        { (void*)MEM_EXT_START, (void*)MEM_EXT_END, (void*)MEM_EXT_START, PTE_W },
     };
 
     int len = sizeof(kernel_map) / sizeof(memory_map_t);
-    for (int i = 0; i < len; i++)
-    {
-        memory_map_t *map = &kernel_map[i];
+    for (int i = 0; i < len; i++) {
+        memory_map_t* map = &kernel_map[i];
 
         uint32_t vstart = down2((uint32_t)map->vstart, MEM_PAGE_SIZE);
         uint32_t vend = up2((uint32_t)map->vend, MEM_PAGE_SIZE);
@@ -134,10 +121,10 @@ void create_kernel_table()
     }
 }
 
-void memory_init(boot_info_t *boot_info)
+void memory_init(boot_info_t* boot_info)
 {
-    extern uint8_t *mem_free_start;
-    uint8_t *mem_free = (uint8_t *)&mem_free_start;
+    extern uint8_t* mem_free_start;
+    uint8_t* mem_free = (uint8_t*)&mem_free_start;
 
     log_printf("memory init....");
     show_mem_info(boot_info);
@@ -148,7 +135,7 @@ void memory_init(boot_info_t *boot_info)
     addr_alloc_init(&paddr_alloc, mem_free, MEM_EXT_START, mem_up1MB_free, MEM_PAGE_SIZE);
     mem_free += bitmap_byte_count(paddr_alloc.size / MEM_PAGE_SIZE);
 
-    ASSERT(mem_free < (uint8_t *)MEM_EBDA_START);
+    ASSERT(mem_free < (uint8_t*)MEM_EBDA_START);
 
     create_kernel_table();
     mmu_set_page_dir((uint32_t)kernel_page_dir);
@@ -156,16 +143,14 @@ void memory_init(boot_info_t *boot_info)
 
 uint32_t memory_create_uvm()
 {
-    pde_t *page_dir = (pde_t *)addr_alloc_page(&paddr_alloc, 1);
-    if (page_dir == 0)
-    {
+    pde_t* page_dir = (pde_t*)addr_alloc_page(&paddr_alloc, 1);
+    if (page_dir == 0) {
         return 0;
     }
-    kernel_memset((void *)page_dir, 0, MEM_PAGE_SIZE);
+    kernel_memset((void*)page_dir, 0, MEM_PAGE_SIZE);
     uint32_t user_pde_start = pde_index(MEM_TASK_BASE);
     // 80000000以下
-    for (int i = 0; i < user_pde_start; i++)
-    {
+    for (int i = 0; i < user_pde_start; i++) {
         page_dir[i].v = kernel_page_dir[i].v;
     }
     // 以上....
@@ -178,18 +163,15 @@ int memory_alloc_page_for_page_dir(uint32_t page_dir, uint32_t vaddr, uint32_t s
     uint32_t cur_vaddr = vaddr;
     int page_count = up2(size, MEM_PAGE_SIZE) / MEM_PAGE_SIZE;
 
-    for (int i = 0; i < page_count; i++)
-    {
+    for (int i = 0; i < page_count; i++) {
         uint32_t paddr = addr_alloc_page(&paddr_alloc, 1);
-        if (paddr == 0)
-        {
+        if (paddr == 0) {
             log_printf("mem alloc failed......");
             return 0;
         }
 
-        int err = memory_create_map((pde_t *)page_dir, cur_vaddr, paddr, 1, perm);
-        if (err < 0)
-        {
+        int err = memory_create_map((pde_t*)page_dir, cur_vaddr, paddr, 1, perm);
+        if (err < 0) {
             log_printf("create mem failed......");
             return 0;
         }
@@ -215,22 +197,18 @@ uint32_t memory_alloc_page()
     return addr_alloc_page(&paddr_alloc, 1);
 }
 
-static pde_t *cur_page_dir()
+static pde_t* cur_page_dir()
 {
-    return (pde_t *)(get_task_cur()->tss.cr3);
+    return (pde_t*)(get_task_cur()->tss.cr3);
 }
-
 
 void memory_free_page(uint32_t addr)
 {
-    if (addr < MEM_TASK_BASE)
-    {
+    if (addr < MEM_TASK_BASE) {
         addr_free_page(&paddr_alloc, addr, 1);
-    }
-    else
-    {
-        pte_t *pte = find_pte(cur_page_dir(), addr, 0);
-        ASSERT((pte != (pte_t *)0) && pte->present);
+    } else {
+        pte_t* pte = find_pte(cur_page_dir(), addr, 0);
+        ASSERT((pte != (pte_t*)0) && pte->present);
 
         addr_free_page(&paddr_alloc, pte_paddr(pte), 1);
         pte->v = 0;

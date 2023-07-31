@@ -60,12 +60,11 @@ typedef struct
 
 #define SEG_TYPE_CODE (1 << 3)
 #define SEG_TYPE_DATA (0 << 3)
-#define SEG_TYPE_TSS  (9 << 0)
+#define SEG_TYPE_TSS (9 << 0)
 #define SEG_TYPE_RW (1 << 1)
 
-
 void segment_desc_set(int selector, uint32_t base, uint32_t limit, uint16_t attr);
-void gate_desc_set(gate_desc_t *desc, uint16_t selector, uint32_t offset, uint16_t attr);
+void gate_desc_set(gate_desc_t* desc, uint16_t selector, uint32_t offset, uint16_t attr);
 void cpu_init();
 int gdt_alloc_desc();
 void switch_tss(uint32_t sel);

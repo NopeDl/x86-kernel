@@ -1,13 +1,12 @@
 #include "core/task.h"
-#include "tools/klib.h"
-#include "os_cfg.h"
-#include "tools/log.h"
-#include "cpu/cpu.h"
 #include "comm/cpu_instr.h"
-#include "cpu/irq.h"
-#include "os_cfg.h"
-#include "cpu/mmu.h"
 #include "core/memory.h"
+#include "cpu/cpu.h"
+#include "cpu/irq.h"
+#include "cpu/mmu.h"
+#include "os_cfg.h"
+#include "tools/klib.h"
+#include "tools/log.h"
 
 static task_manager_t task_manager;
 
@@ -15,43 +14,36 @@ static uint32_t idle_task_stack[IDLE_STACK_SIZE];
 
 static void idle_task_entry()
 {
-    while (1)
-    {
+    while (1) {
         hlt();
     }
 }
 
-static int tss_init(task_t *task, int flags, uint32_t entry, uint32_t esp)
+static int tss_init(task_t* task, int flags, uint32_t entry, uint32_t esp)
 {
     int tss_selector = gdt_alloc_desc();
-    if (tss_selector == -1)
-    {
+    if (tss_selector == -1) {
         log_printf("alloc tss failed....");
         return -1;
     }
 
     uint32_t kernel_stack = memory_alloc_page();
-    if (kernel_stack == 0)
-    {
+    if (kernel_stack == 0) {
         goto tss_init_failed;
     }
-    
 
     int code_sel, data_sel;
-    if (flags & TASK_FLAGS_SYSTEM)
-    {
+    if (flags & TASK_FLAGS_SYSTEM) {
         code_sel = KERNEL_SELECTOR_CS;
         data_sel = KERNEL_SELECTOR_DS;
-    }
-    else
-    {
+    } else {
         code_sel = task_manager.app_code_sel | SEG_CPL3;
         data_sel = task_manager.app_data_sel | SEG_CPL3;
     }
 
-    tss_t *tp = &task->tss;
+    tss_t* tp = &task->tss;
     segment_desc_set(tss_selector, (uint32_t)tp, sizeof(tss_t),
-                     SEG_P_PRESENT | SEG_DPL0 | SEG_TYPE_TSS);
+        SEG_P_PRESENT | SEG_DPL0 | SEG_TYPE_TSS);
 
     kernel_memset(tp, 0, sizeof(tss_t));
     tp->esp = esp;
@@ -63,8 +55,7 @@ static int tss_init(task_t *task, int flags, uint32_t entry, uint32_t esp)
     tp->cs = code_sel;
     tp->eflags = EFLAGS_DEFAULT | EFLAGS_IF;
     uint32_t page_addr = memory_create_uvm();
-    if (page_addr == 0)
-    {
+    if (page_addr == 0) {
         goto tss_init_failed;
     }
 
@@ -74,18 +65,16 @@ static int tss_init(task_t *task, int flags, uint32_t entry, uint32_t esp)
 
 tss_init_failed:
     gdt_free_sel(tss_selector);
-    if (kernel_stack != 0)
-    {
+    if (kernel_stack != 0) {
         memory_free_page(kernel_stack);
     }
-    
-    return -1;
 
+    return -1;
 }
 
-int task_init(task_t *task, const char *name, int flags, uint32_t entry, uint32_t esp)
+int task_init(task_t* task, const char* name, int flags, uint32_t entry, uint32_t esp)
 {
-    ASSERT(task != (task_t *)0);
+    ASSERT(task != (task_t*)0);
     tss_init(task, flags, entry, esp);
 
     list_node_init(&task->run_node);
@@ -105,9 +94,9 @@ int task_init(task_t *task, const char *name, int flags, uint32_t entry, uint32_
     return 0;
 }
 
-void simple_switch(uint32_t **from, uint32_t *to);
+void simple_switch(uint32_t** from, uint32_t* to);
 
-void task_switch_from_to(task_t *from, task_t *to)
+void task_switch_from_to(task_t* from, task_t* to)
 {
     switch_tss(to->tss_sel);
 }
@@ -131,10 +120,10 @@ void task_first_init()
     mmu_set_page_dir(task_manager.first_task.tss.cr3);
 
     memory_alloc_page_for(first_start, alloc_size, PTE_P | PTE_W | PTE_U);
-    kernel_memcpy((void *)first_start, (void *)s_first_task, copy_size);
+    kernel_memcpy((void*)first_start, (void*)s_first_task, copy_size);
 }
 
-task_t *get_first_task()
+task_t* get_first_task()
 {
     return &task_manager.first_task;
 }
@@ -143,30 +132,29 @@ void task_manager_init()
 {
     int sel = gdt_alloc_desc();
     segment_desc_set(sel, 0x00000000, 0xffffffff,
-                     SEG_P_PRESENT | SEG_DPL3 | SEG_S_NORMAL | SEG_TYPE_DATA | SEG_TYPE_RW | SEG_D);
+        SEG_P_PRESENT | SEG_DPL3 | SEG_S_NORMAL | SEG_TYPE_DATA | SEG_TYPE_RW | SEG_D);
     task_manager.app_data_sel = sel;
 
     sel = gdt_alloc_desc();
     segment_desc_set(sel, 0x00000000, 0xffffffff,
-                     SEG_P_PRESENT | SEG_DPL3 | SEG_S_NORMAL | SEG_TYPE_CODE | SEG_TYPE_RW | SEG_D);
+        SEG_P_PRESENT | SEG_DPL3 | SEG_S_NORMAL | SEG_TYPE_CODE | SEG_TYPE_RW | SEG_D);
     task_manager.app_code_sel = sel;
 
     // 各队列初始化
     list_init(&task_manager.ready_list);
     list_init(&task_manager.task_list);
     list_init(&task_manager.sleep_list);
-    task_manager.cur_task = (task_t *)0;
+    task_manager.cur_task = (task_t*)0;
     task_init(&task_manager.idle_task,
-              "idle-task",
-              TASK_FLAGS_SYSTEM,
-              (uint32_t)idle_task_entry,
-              (uint32_t)(idle_task_stack + IDLE_STACK_SIZE));
+        "idle-task",
+        TASK_FLAGS_SYSTEM,
+        (uint32_t)idle_task_entry,
+        (uint32_t)(idle_task_stack + IDLE_STACK_SIZE));
 }
 
-void task_set_ready(task_t *task)
+void task_set_ready(task_t* task)
 {
-    if (task == &task_manager.idle_task)
-    {
+    if (task == &task_manager.idle_task) {
         return;
     }
 
@@ -174,10 +162,9 @@ void task_set_ready(task_t *task)
     task->state = TASK_READY;
 }
 
-void task_set_block(task_t *task)
+void task_set_block(task_t* task)
 {
-    if (task == &task_manager.idle_task)
-    {
+    if (task == &task_manager.idle_task) {
         return;
     }
 
@@ -185,10 +172,9 @@ void task_set_block(task_t *task)
     task->state = TASK_READY;
 }
 
-void task_set_sleep(task_t *task, uint32_t ticks)
+void task_set_sleep(task_t* task, uint32_t ticks)
 {
-    if (ticks <= 0)
-    {
+    if (ticks <= 0) {
         return;
     }
 
@@ -197,23 +183,22 @@ void task_set_sleep(task_t *task, uint32_t ticks)
     list_insert_last(&task_manager.sleep_list, &task->run_node);
 }
 
-void task_set_wakeup(task_t *task)
+void task_set_wakeup(task_t* task)
 {
     list_remove(&task_manager.sleep_list, &task->run_node);
 }
 
-task_t *get_task_next_run()
+task_t* get_task_next_run()
 {
-    if (list_count(&task_manager.ready_list) <= 0)
-    {
+    if (list_count(&task_manager.ready_list) <= 0) {
         return &task_manager.idle_task;
     }
 
-    list_node_t *task_node = list_first(&task_manager.ready_list);
+    list_node_t* task_node = list_first(&task_manager.ready_list);
     return list_node_parent(task_node, task_t, run_node);
 }
 
-task_t *get_task_cur()
+task_t* get_task_cur()
 {
     return task_manager.cur_task;
 }
@@ -221,9 +206,8 @@ task_t *get_task_cur()
 int sys_sched_yield()
 {
     irq_state state = irq_enter_protection();
-    if (list_count(&task_manager.ready_list) > 1)
-    {
-        task_t *cur_task = get_task_cur();
+    if (list_count(&task_manager.ready_list) > 1) {
+        task_t* cur_task = get_task_cur();
         task_set_block(cur_task);
         task_set_ready(cur_task);
 
@@ -235,10 +219,9 @@ int sys_sched_yield()
 
 void task_dispatch(void)
 {
-    task_t *to = get_task_next_run();
-    if (to != task_manager.cur_task)
-    {
-        task_t *from = task_manager.cur_task;
+    task_t* to = get_task_next_run();
+    if (to != task_manager.cur_task) {
+        task_t* from = task_manager.cur_task;
         task_manager.cur_task = to;
 
         to->state = TASK_RUNNING;
@@ -249,8 +232,7 @@ void task_dispatch(void)
 void sys_sleep(uint32_t ms)
 {
     // 至少延时1个tick
-    if (ms < OS_TICK_MS)
-    {
+    if (ms < OS_TICK_MS) {
         ms = OS_TICK_MS;
     }
 
@@ -271,12 +253,11 @@ void sys_sleep(uint32_t ms)
  */
 void task_time_tick(void)
 {
-    task_t *curr_task = get_task_cur();
+    task_t* curr_task = get_task_cur();
 
     // 时间片的处理
     irq_state state = irq_enter_protection();
-    if (--curr_task->slice_ticks == 0)
-    {
+    if (--curr_task->slice_ticks == 0) {
         // 时间片用完，重新加载时间片
         // 对于空闲任务，此处减未用
         curr_task->slice_ticks = curr_task->time_slice;
@@ -287,14 +268,12 @@ void task_time_tick(void)
     }
 
     // 睡眠处理
-    list_node_t *curr = list_first(&task_manager.sleep_list);
-    while (curr)
-    {
-        list_node_t *next = list_node_next(curr);
+    list_node_t* curr = list_first(&task_manager.sleep_list);
+    while (curr) {
+        list_node_t* next = list_node_next(curr);
 
-        task_t *task = list_node_parent(curr, task_t, run_node);
-        if (--task->sleep_ticks == 0)
-        {
+        task_t* task = list_node_parent(curr, task_t, run_node);
+        if (--task->sleep_ticks == 0) {
             // 延时时间到达，从睡眠队列中移除，送至就绪队列
             task_set_wakeup(task);
             task_set_ready(task);

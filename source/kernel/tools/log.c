@@ -1,9 +1,9 @@
-#include <stdarg.h>
 #include "tools/log.h"
-#include "tools/klib.h"
 #include "comm/cpu_instr.h"
 #include "cpu/irq.h"
 #include "ipc/mutex.h"
+#include "tools/klib.h"
+#include <stdarg.h>
 
 static mutex_t mutex;
 
@@ -23,7 +23,7 @@ void log_init()
     mutex_init(&mutex);
 }
 
-void log_printf(const char *msg, ...)
+void log_printf(const char* msg, ...)
 {
     char str_buf[128];
     va_list args;
@@ -34,9 +34,8 @@ void log_printf(const char *msg, ...)
     va_end(args);
 
     mutex_lock(&mutex);
-    const char *p = str_buf;
-    while (*p != '\0')
-    {
+    const char* p = str_buf;
+    while (*p != '\0') {
         // 判断是否在忙
         while ((inb(COM1_PORT + 5) & (1 << 6)) == 0)
             ;
