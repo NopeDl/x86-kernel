@@ -1,10 +1,12 @@
 #include "core/task.h"
 #include "comm/cpu_instr.h"
+#include "comm/elf.h"
 #include "core/memory.h"
 #include "core/syscall.h"
 #include "cpu/cpu.h"
 #include "cpu/irq.h"
 #include "cpu/mmu.h"
+#include "fs/fs.h"
 #include "os_cfg.h"
 #include "tools/klib.h"
 #include "tools/log.h"
@@ -383,9 +385,85 @@ fork_failed:
     return -1;
 }
 
-//todo
+static int load_phdr(int file, Elf32_Phdr* phdr, uint32_t page_dir)
+{
+    int err = memory_alloc_page_for_page_dir(page_dir, phdr->p_vaddr, phdr->p_memsz, PTE_P | PTE_U | PTE_W);
+    if (err < 0) {
+        log_printf("no memory");
+        return -1;
+    }
+
+    if (sys_lseek(file, phdr->p_offset, 0) < 0) {
+        log_printf("read failed..");
+        return -1;
+    }
+
+    uint32_t vaddr = phdr->p_vaddr;
+    uint32_t size = phdr->p_filesz;
+    while (size > 0) {
+        int cur_size = (size > MEM_PAGE_SIZE) ? MEM_PAGE_SIZE : size;
+        uint32_t paddr = memory_get_paddr(page_dir, vaddr);
+        if (sys_fread(file, (char*)paddr, cur_size) < cur_size) {
+            return -1;
+        }
+
+        size -= cur_size;
+        vaddr += cur_size;
+    }
+}
+
 static uint32_t load_elf_file(task_t* task, const char* filename, uint32_t page_dir)
 {
+    Elf32_Ehdr elf_hdr;
+    Elf32_Phdr elf_phdr;
+    int file = sys_fopen(filename, 0);
+    if (file < 0) {
+        log_printf("file open failed: %s", filename);
+        goto load_failed;
+    }
+
+    int cnt = sys_fread(file, (char*)&elf_hdr, sizeof(elf_hdr));
+    if (cnt < sizeof(Elf32_Ehdr)) {
+        log_printf("elf hdr too small. size = %d", cnt);
+        goto load_failed;
+    }
+
+    if ((elf_hdr.e_ident[0] != 0x7F) || (elf_hdr.e_ident[1] != 'E')
+        || (elf_hdr.e_ident[2] != 'L') || (elf_hdr.e_ident[2] != 'F')) {
+        goto load_failed;
+    }
+
+    uint32_t e_phoff = elf_hdr.e_phoff;
+    for (int i = 0; i < elf_hdr.e_phnum; i++, e_phoff += elf_hdr.e_phentsize) {
+        if (sys_lseek(file, e_phoff, 0) < 0) {
+            log_printf("lseek failed");
+            goto load_failed;
+        }
+
+        cnt = sys_fread(file, (char*)&elf_phdr, sizeof(elf_phdr));
+        if (cnt < sizeof(Elf32_Phdr)) {
+            log_printf("elf phdr too small. size = %d", cnt);
+            goto load_failed;
+        }
+
+        if ((elf_phdr.p_type != 1) || (elf_phdr.p_vaddr < MEM_TASK_BASE)) {
+            continue;
+        }
+
+        int err = load_phdr(file, &elf_phdr, page_dir);
+        if (err < 0) {
+            log_printf("load failed");
+            goto load_failed;
+        }
+    }
+
+    sys_fclose(file);
+    return elf_hdr.e_entry;
+
+load_failed:
+    if (file) {
+        sys_fclose(file);
+    }
     return 0;
 }
 

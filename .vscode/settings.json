@@ -17,6 +17,7 @@
         "klib.h": "c",
         "list.h": "c",
         "mmu.h": "c",
-        "syscall.h": "c"
+        "syscall.h": "c",
+        "memory.h": "c"
     },
 }

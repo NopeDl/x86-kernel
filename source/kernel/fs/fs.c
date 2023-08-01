@@ -1,6 +1,8 @@
 #include "fs/fs.h"
 #include "comm/types.h"
 #include "tools/klib.h"
+#include "comm/cpu_instr.h"
+#include "comm/boot_info.h"
 
 static uint8_t TEMP_ADDR[100 * 1024];
 static uint8_t* temp_pos;
@@ -40,9 +42,9 @@ static void read_disk(uint32_t sector, uint32_t sector_count, uint8_t* buffer)
 int sys_fopen(const char* filename, int flags, ...)
 {
     // 临时
-    if (name[0] == '/') {
-        read_disk(5000, 80, (uint8_t)TEMP_ADDR);
-        temp_pos = (uint8_t)TEMP_ADDR;
+    if (filename[0] == '/') {
+        read_disk(5000, 80, (uint8_t*)TEMP_ADDR);
+        temp_pos = (uint8_t*)TEMP_ADDR;
         return TEMP_FILE_ID;
     }
     return -1;
@@ -68,7 +70,7 @@ int sys_fwrite(int file, char* ptr, int len)
 int sys_lseek(int file, int ptr, int dir)
 {
     if (file == TEMP_FILE_ID) {
-        temp_pos = (uint8_t)(TEMP_ADDR + ptr);
+        temp_pos = (uint8_t*)(TEMP_ADDR + ptr);
         return 0;
     }
 
