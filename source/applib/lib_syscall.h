@@ -81,6 +81,13 @@ static inline int execve(const char* filename, char* const argv[], char* const e
     return sys_call(&args);
 }
 
+static inline int yield()
+{
+    syscall_args_t args;
+    args.id = SYS_YIELD;
+    return sys_call(&args);
+}
+
 static inline void simple_printf(const char* msg, int arg1)
 {
     syscall_args_t args;

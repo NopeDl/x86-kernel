@@ -17,6 +17,7 @@ typedef struct
 #define GET_PID 1
 #define SYS_FORK 2
 #define SYS_EXECVE 3
+#define SYS_YIELD 4
 #define SIMPLE_PRINTF 999
 
 void exception_handler_syscall();
