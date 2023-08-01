@@ -25,6 +25,9 @@ int kernel_memcmp(void* d1, void* d2, int size);
 
 void kernel_vsprintf(char* buf, const char* msg, va_list args);
 
+char* get_file_name(char* filename);
+int strings_count(char** filename);
+
 #ifndef RELEASE
 
 #define ASSERT(expr) \

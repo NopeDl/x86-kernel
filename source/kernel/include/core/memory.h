@@ -6,6 +6,9 @@
 #define MEM_PAGE_SIZE 4096
 #define MEM_EBDA_START 0x80000
 #define MEM_TASK_BASE 0x80000000
+#define MEM_TASK_STACK_TOP 0xE0000000
+#define MEM_TASK_STACK_SIZE (MEM_PAGE_SIZE * 500)
+#define MEM_TASK_ARG_SIZE (MEM_PAGE_SIZE * 4)
 
 #include "comm/boot_info.h"
 #include "comm/types.h"
@@ -47,5 +50,7 @@ uint32_t memory_copy_uvm(uint32_t page_dir);
 void memory_destroy_uvm(uint32_t page_dir);
 
 uint32_t memory_get_paddr(uint32_t page_dir, uint32_t vaddr);
+
+int memory_copy_uvm_data(uint32_t to, uint32_t page_dir, uint32_t from, uint32_t size);
 
 #endif

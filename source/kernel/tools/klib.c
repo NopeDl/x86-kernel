@@ -208,3 +208,28 @@ void pannic(const char* file, int line, const char* func, const char* cond)
         hlt();
     }
 }
+
+char* get_file_name(char* filename)
+{
+    char* p = filename;
+    // 移动到末尾
+    while (*p != '\0') {
+        p++;
+    }
+    // 往前
+    while ((p >= filename) && (*p != '/') && (*p != '\\')) {
+        p--;
+    }
+    return p + 1;
+}
+
+int strings_count(char** filename)
+{
+    int cnt = 0;
+    if (filename) {
+        while (*filename++) {
+            cnt++;
+        }
+    }
+    return cnt;
+}

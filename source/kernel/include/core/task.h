@@ -9,6 +9,12 @@
 
 #define TASK_FLAGS_SYSTEM (1 << 0)
 
+typedef struct _task_args_t {
+    uint32_t ret_addr;
+    uint32_t argc;
+    char** argv;
+} task_args_t;
+
 typedef struct _task_t {
     enum {
         TASK_CREATED,
@@ -74,5 +80,5 @@ int sys_get_pid();
 
 int sys_fork();
 
-int sys_execve(const char* filename, char* const argv[], char* const envp[]);
+int sys_execve(char* filename, char** argv, char** envp);
 #endif

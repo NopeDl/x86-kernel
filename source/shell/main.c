@@ -1,6 +1,6 @@
 #include "lib_syscall.h"
 
-int main(int argc, char const* argv[])
+int main(int argc, char** argv)
 {
     while (1) {
         msleep(1000);

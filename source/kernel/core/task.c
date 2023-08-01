@@ -428,8 +428,8 @@ static uint32_t load_elf_file(task_t* task, const char* filename, uint32_t page_
         goto load_failed;
     }
 
-    if ((elf_hdr.e_ident[0] != 0x7F) || (elf_hdr.e_ident[1] != 'E')
-        || (elf_hdr.e_ident[2] != 'L') || (elf_hdr.e_ident[2] != 'F')) {
+    if ((elf_hdr.e_ident[0] != 127) || (elf_hdr.e_ident[1] != 'E')
+        || (elf_hdr.e_ident[2] != 'L') || (elf_hdr.e_ident[3] != 'F')) {
         goto load_failed;
     }
 
@@ -467,9 +467,34 @@ load_failed:
     return 0;
 }
 
-int sys_execve(const char* filename, char* const argv[], char* const envp[])
+static int copy_args(char* to, uint32_t page_dir, int argc, char** argv)
+{
+    task_args_t task_args;
+    task_args.argc = argc;
+    task_args.argv = (char**)(to + sizeof(task_args_t));
+
+    char* dest_arg = to + sizeof(task_args_t) + sizeof(char*) * argc;
+    char** dest_arg_tb = (char**)memory_get_paddr(page_dir, (uint32_t)(to + sizeof(task_args_t)));
+
+    for (int i = 0; i < argc; i++) {
+        char* from = argv[i];
+        int len = kernel_strlen(from) + 1;
+        int err = memory_copy_uvm_data((uint32_t)dest_arg, page_dir, (uint32_t)from, len);
+        ASSERT(err >= 0);
+
+        dest_arg_tb[i] = dest_arg;
+        dest_arg += len;
+    }
+
+    return memory_copy_uvm_data((uint32_t)to, page_dir, (uint32_t)&task_args, sizeof(task_args));
+}
+
+int sys_execve(char* filename, char** argv, char** envp)
 {
     task_t* task = get_task_cur();
+
+    char* new_name = get_file_name(filename);
+    kernel_memcpy(task->name, new_name, TASK_NAME_SIZE);
 
     uint32_t old_page_dir = task->tss.cr3;
     uint32_t new_page_dir = memory_create_uvm();
@@ -481,6 +506,32 @@ int sys_execve(const char* filename, char* const argv[], char* const envp[])
     if (entry == 0) {
         goto exec_failed;
     }
+    // 分配栈
+    uint32_t stack_top = MEM_TASK_STACK_TOP - MEM_TASK_ARG_SIZE;
+    int err = memory_alloc_page_for_page_dir(
+        new_page_dir, MEM_TASK_STACK_TOP - MEM_TASK_STACK_SIZE,
+        MEM_TASK_STACK_SIZE, PTE_P | PTE_U | PTE_W);
+    if (err < 0) {
+        goto exec_failed;
+    }
+
+    int argc = strings_count(argv);
+    argv[argc++] = new_name;
+
+    err = copy_args((char*)stack_top, new_page_dir, argc, argv);
+    if (err < 0) {
+        goto exec_failed;
+    }
+
+    syscall_frame_t* frame = (syscall_frame_t*)(task->tss.esp0 - sizeof(syscall_frame_t));
+    // 将返回地址设置成新程序的入口地址
+    frame->eip = entry;
+    // 清空寄存器
+    frame->eax = frame->ebx = frame->ecx = frame->edx = 0;
+    frame->esi = frame->edi = frame->ebp = 0;
+    frame->eflags = EFLAGS_IF | EFLAGS_DEFAULT;
+    // 设置成自己的栈
+    frame->esp = stack_top - sizeof(uint32_t) * SYSCALL_PARAM_COUNT;
 
     task->tss.cr3 = new_page_dir;
     // 刷到cr3中

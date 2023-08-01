@@ -310,3 +310,26 @@ uint32_t memory_get_paddr(uint32_t page_dir, uint32_t vaddr)
     }
     return pte_paddr(pte) + (vaddr & (MEM_PAGE_SIZE - 1));
 }
+
+int memory_copy_uvm_data(uint32_t to, uint32_t page_dir, uint32_t from, uint32_t size)
+{
+    while (size > 0) {
+        uint32_t to_paddr = memory_get_paddr(page_dir, to);
+        if (to_paddr == 0) {
+            return -1;
+        }
+
+        uint32_t offset_in_page = to_paddr & (MEM_PAGE_SIZE - 1);
+        uint32_t cur_size = MEM_PAGE_SIZE - offset_in_page;
+        if (cur_size > size) {
+            cur_size = size;
+        }
+
+        kernel_memcpy((void*)to_paddr, (void*)from, cur_size);
+
+        size -= cur_size;
+        to += cur_size;
+        from += cur_size;
+    }
+    return 0;
+}
