@@ -18,6 +18,14 @@ typedef struct
 #define SYS_FORK 2
 #define SYS_EXECVE 3
 #define SYS_YIELD 4
+
+#define SYS_OPEN 50
+#define SYS_READ 51
+#define SYS_WRITE 52
+#define SYS_CLOSE 53
+#define SYS_LSEEK 54
+
+
 #define SIMPLE_PRINTF 999
 
 void exception_handler_syscall();
