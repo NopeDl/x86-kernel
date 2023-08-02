@@ -1,9 +1,9 @@
 #include "fs/fs.h"
+#include "comm/boot_info.h"
+#include "comm/cpu_instr.h"
 #include "comm/types.h"
 #include "tools/klib.h"
-#include "comm/cpu_instr.h"
-#include "comm/boot_info.h"
-
+#include "tools/log.h"
 
 static uint8_t TEMP_ADDR[100 * 1024];
 static uint8_t* temp_pos;
@@ -58,6 +58,7 @@ int sys_fread(int file, char* ptr, int len)
         kernel_memcpy(ptr, temp_pos, len);
         temp_pos += len;
         return len;
+    } else if (file == 0) {
     }
 
     return -1;
@@ -65,6 +66,8 @@ int sys_fread(int file, char* ptr, int len)
 
 int sys_fwrite(int file, char* ptr, int len)
 {
+    ptr[len] = '\0';
+    log_printf("%s", ptr);
     return -1;
 }
 
