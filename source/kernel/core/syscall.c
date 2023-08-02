@@ -3,6 +3,7 @@
 #include "core/task.h"
 #include "tools/log.h"
 #include "fs/fs.h"
+#include "core/memory.h"
 
 typedef int (*syscall_handle_t)(uint32_t arg0, uint32_t arg1, uint32_t arg2, uint32_t arg3);
 
@@ -18,6 +19,10 @@ static const syscall_handle_t sys_func_table[] = {
     [SYS_WRITE] = (syscall_handle_t)sys_fwrite,
     [SYS_CLOSE] = (syscall_handle_t)sys_fclose,
     [SYS_LSEEK] = (syscall_handle_t)sys_lseek,
+
+    [SYS_ISATTY] = (syscall_handle_t)sys_isatty,
+    [SYS_FSTAT] = (syscall_handle_t)sys_fstat,
+    [SYS_SBRK] = (syscall_handle_t)sys_sbrk,
     
     [SIMPLE_PRINTF] = (syscall_handle_t)log_printf,
 };

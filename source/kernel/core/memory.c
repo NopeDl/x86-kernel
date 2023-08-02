@@ -333,3 +333,8 @@ int memory_copy_uvm_data(uint32_t to, uint32_t page_dir, uint32_t from, uint32_t
     }
     return 0;
 }
+
+char* sys_sbrk(int incr)
+{
+    return (char*)0;
+}
