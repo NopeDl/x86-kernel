@@ -98,6 +98,8 @@ int task_init(task_t* task, const char* name, int flags, uint32_t entry, uint32_
     task->pid = (uint32_t)task;
     task->parent = (task_t*)0;
 
+    task->heap_start = task->heap_end = 0;
+
     task->time_slice = TASK_TIME_SLICE_DEFAULT;
     task->slice_ticks = TASK_TIME_SLICE_DEFAULT;
     task->sleep_ticks = 0;
@@ -142,7 +144,9 @@ void task_first_init()
 
     uint32_t first_start = (uint32_t)first_task_entry;
     task_init(&task_manager.first_task, "first-task", 0, first_start, first_start + alloc_size);
-
+    //设置堆地址
+    task_manager.first_task.heap_start = (uint32_t)e_first_task;
+    task_manager.first_task.heap_end = task_manager.first_task.heap_start;
     // 写TR寄存器，指示当前运行的第一个任务
     write_tr(task_manager.first_task.tss_sel);
     task_manager.cur_task = &task_manager.first_task;
@@ -465,6 +469,9 @@ static uint32_t load_elf_file(task_t* task, const char* filename, uint32_t page_
             log_printf("load failed");
             goto load_failed;
         }
+
+        task->heap_start = elf_phdr.p_vaddr + elf_phdr.p_memsz;
+        task->heap_end = task->heap_start;
     }
 
     sys_fclose(file);

@@ -336,5 +336,40 @@ int memory_copy_uvm_data(uint32_t to, uint32_t page_dir, uint32_t from, uint32_t
 
 char* sys_sbrk(int incr)
 {
-    return (char*)0;
+    task_t* task = get_task_cur();
+    char* pre_heap_end = (char*)task->heap_end;
+    int pre_incr = incr;
+
+    ASSERT(incr >= 0);
+    if (incr == 0) {
+        log_printf("sbrk(0): end = 0x%x", pre_heap_end);
+        return pre_heap_end;
+    }
+
+    uint32_t start = task->heap_end;
+    uint32_t end = start + incr;
+    // 页边界对齐
+    uint32_t start_offset = start % MEM_PAGE_SIZE;
+    if (start_offset) {
+        if (start_offset + incr <= MEM_PAGE_SIZE) {
+            task->heap_end = end;
+            return pre_heap_end;
+        } else {
+            uint32_t cur_size = MEM_PAGE_SIZE - start_offset;
+            start += cur_size;
+            incr -= cur_size;
+        }
+    }
+
+    if (incr) {
+        uint32_t cur_size = end - start;
+        int err = memory_alloc_page_for(start, cur_size, PTE_P | PTE_U | PTE_W);
+        if (err < 0) {
+            log_printf("sbrk: alloc mem failed");
+            return (char*)-1;
+        }
+    }
+    log_printf("sbrk(%d): end=0x%x", pre_incr, end);
+    task->heap_end = end;
+    return (char*)pre_heap_end;
 }
