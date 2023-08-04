@@ -18,6 +18,7 @@
         "list.h": "c",
         "mmu.h": "c",
         "syscall.h": "c",
-        "memory.h": "c"
+        "memory.h": "c",
+        "concole.h": "c"
     },
 }

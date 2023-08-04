@@ -9,6 +9,7 @@
 #include "os_cfg.h"
 #include "tools/klib.h"
 #include "tools/log.h"
+#include "dev/concole.h"
 
 static boot_info_t* init_boot_info;
 
@@ -20,9 +21,11 @@ void kernel_init(boot_info_t* boot_info)
     ASSERT(boot_info->ram_region_count != 0);
     init_boot_info = boot_info;
 
-    memory_init(boot_info);
     log_init();
     cpu_init();
+    console_init();
+    
+    memory_init(boot_info);
     irq_init();
     timer_init();
     task_manager_init();
