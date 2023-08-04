@@ -1,6 +1,6 @@
 #include "core/memory.h"
-
 #include "cpu/mmu.h"
+#include "dev/concole.h"
 #include "tools/klib.h"
 #include "tools/log.h"
 
@@ -105,6 +105,7 @@ void create_kernel_table()
         { kernel_base, s_text, kernel_base, PTE_W },
         { s_text, e_text, s_text, 0 },
         { s_data, (void*)MEM_EBDA_START, s_data, PTE_W },
+        { (void*)CONSOLE_DISP_ADDR, (void*)CONSOLE_DISP_END, (void*)CONSOLE_DISP_ADDR, PTE_W }, // 显存区域
         { (void*)MEM_EXT_START, (void*)MEM_EXT_END, (void*)MEM_EXT_START, PTE_W },
     };
 
