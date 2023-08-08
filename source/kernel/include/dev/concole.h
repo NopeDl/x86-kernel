@@ -7,6 +7,7 @@
 #define CONSOLE_DISP_END (0XB8000 + 32 * 1024)
 #define CONSOLE_ROW_MAX 25
 #define CONSOLE_COL_MAX 80
+#define ESC_PARAM_MAX 10
 
 typedef union _disp_char_t {
     uint32_t v;
@@ -22,7 +23,8 @@ typedef union _disp_char_t {
 typedef struct _concole_t {
     enum {
         CONSOLE_WRITE_NORMAL,
-        CONSOLE_WRITE_ESC
+        CONSOLE_WRITE_ESC,
+        CONSOLE_WRITE_SQUARE
     } write_status;
 
     disp_char_t* disp_base;
@@ -31,6 +33,8 @@ typedef struct _concole_t {
     color_t foreground, background;
 
     int old_cursor_col, old_cursor_row;
+    int esc_param[ESC_PARAM_MAX];
+    int cur_parm_idx;
 } console_t;
 
 int console_init();
