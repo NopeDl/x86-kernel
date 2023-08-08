@@ -160,9 +160,69 @@ int console_init()
         console_buf[i].cursor_row = cursor_pos / console_buf[i].disp_cols;
         console_buf[i].cursor_col = cursor_pos % console_buf[i].disp_cols;
 
+        console_buf[i].old_cursor_col = console_buf[i].cursor_col;
+        console_buf[i].old_cursor_row = console_buf[i].cursor_row;
+
+        console_buf[i].write_status = CONSOLE_WRITE_NORMAL;
         // clear_display(&console_buf[i]);
     }
     return 0;
+}
+
+static void write_normal(console_t* c, char ch)
+{
+    switch (ch) {
+    case ASCII_ESC:
+        c->write_status = CONSOLE_WRITE_ESC;
+        break;
+    case '\n':
+        move_to_col0(c);
+        move_next_line(c);
+        break;
+    case 0x7f:
+        erase_backword(c);
+        break;
+    case '\b':
+        move_backword(c, 1);
+        break;
+    case '\r':
+        move_to_col0(c);
+        break;
+    default:
+        if ((ch >= ' ') && (ch <= '~')) {
+            show_char(c, ch);
+        }
+        break;
+    }
+}
+
+void save_cursor(console_t* console)
+{
+    console->old_cursor_col = console->cursor_col;
+    console->old_cursor_row = console->cursor_row;
+}
+
+void restore_cursor(console_t* console)
+{
+    console->cursor_col = console->old_cursor_col;
+    console->cursor_row = console->old_cursor_row;
+}
+
+static void write_esc(console_t* console, char ch)
+{
+    switch (ch) {
+    case '7':
+        save_cursor(console);
+        console->write_status = CONSOLE_WRITE_NORMAL;
+        break;
+    case '8':
+        restore_cursor(console);
+        console->write_status = CONSOLE_WRITE_NORMAL;
+        break;
+    default:
+        console->write_status = CONSOLE_WRITE_NORMAL;   
+        break;
+    }
 }
 
 int console_write(int console, char* data, int size)
@@ -172,24 +232,14 @@ int console_write(int console, char* data, int size)
 
     for (len = 0; len < size; len++) {
         char ch = *data++;
-        switch (ch) {
-        case '\n':
-            move_to_col0(c);
-            move_next_line(c);
+        switch (c->write_status) {
+        case CONSOLE_WRITE_NORMAL:
+            write_normal(c, ch);
             break;
-        case 0x7f:
-            erase_backword(c);
-            break;
-        case '\b':
-            move_backword(c, 1);
-            break;
-        case '\r':
-            move_to_col0(c);
+        case CONSOLE_WRITE_ESC:
+            write_esc(c, ch);
             break;
         default:
-            if ((ch >= ' ') && (ch <= '~')) {
-                show_char(c, ch);
-            }
             break;
         }
     }
