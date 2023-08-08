@@ -1,15 +1,20 @@
 #include "tools/log.h"
 #include "comm/cpu_instr.h"
 #include "cpu/irq.h"
+#include "dev/concole.h"
 #include "ipc/mutex.h"
 #include "tools/klib.h"
 #include <stdarg.h>
 
+//串口输出开关(关闭则输出至显示器)
+#define LOG_USE_COM 0
+
 static mutex_t mutex;
 
-// 暂时使用串行接口方法
 void log_init()
 {
+    mutex_init(&mutex);
+#if LOG_USE_COM
     // 清除串行接口自身中断
     outb(COM1_PORT + 1, 0x00);
     // 配置
@@ -19,8 +24,7 @@ void log_init()
     outb(COM1_PORT + 3, 0x03);
     outb(COM1_PORT + 2, 0xc7);
     outb(COM1_PORT + 4, 0x0f);
-
-    mutex_init(&mutex);
+#endif
 }
 
 void log_printf(const char* msg, ...)
@@ -34,6 +38,7 @@ void log_printf(const char* msg, ...)
     va_end(args);
 
     mutex_lock(&mutex);
+#if LOG_USE_COM
     const char* p = str_buf;
     while (*p != '\0') {
         // 判断是否在忙
@@ -44,5 +49,10 @@ void log_printf(const char* msg, ...)
     }
     outb(COM1_PORT, '\r');
     outb(COM1_PORT, '\n');
+#else
+    console_write(0, str_buf, kernel_strlen(str_buf));
+    char c = '\n';
+    console_write(0, &c, 1);
+#endif
     mutex_unlock(&mutex);
 }
