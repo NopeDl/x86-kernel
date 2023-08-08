@@ -113,6 +113,38 @@ static void clear_display(console_t* console)
     }
 }
 
+/**
+ * 左移n个位置
+ */
+static int move_backword(console_t* console, int n)
+{
+    int status = -1;
+
+    for (int i = 0; i < n; i++) {
+        if (console->cursor_col > 0) {
+            console->cursor_col--;
+            status = 0;
+        } else if (console->cursor_row > 0) {
+            console->cursor_row--;
+            console->cursor_col = console->disp_cols - 1;
+            status = 0;
+        }
+    }
+
+    return status;
+}
+
+/**
+ * 往左擦除一个字符
+ */
+static void erase_backword(console_t* console)
+{
+    if (move_backword(console, 1) == 0) {
+        show_char(console, ' ');
+        move_backword(console, 1);
+    }
+}
+
 int console_init()
 {
     for (int i = 0; i < CONSOLE_NR; i++) {
@@ -127,7 +159,7 @@ int console_init()
         // 转换光标位置为行和列
         console_buf[i].cursor_row = cursor_pos / console_buf[i].disp_cols;
         console_buf[i].cursor_col = cursor_pos % console_buf[i].disp_cols;
-        
+
         // clear_display(&console_buf[i]);
     }
     return 0;
@@ -145,9 +177,19 @@ int console_write(int console, char* data, int size)
             move_to_col0(c);
             move_next_line(c);
             break;
-
+        case 0x7f:
+            erase_backword(c);
+            break;
+        case '\b':
+            move_backword(c, 1);
+            break;
+        case '\r':
+            move_to_col0(c);
+            break;
         default:
-            show_char(c, ch);
+            if ((ch >= ' ') && (ch <= '~')) {
+                show_char(c, ch);
+            }
             break;
         }
     }
