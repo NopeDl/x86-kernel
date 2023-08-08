@@ -1,8 +1,36 @@
+#include "comm/cpu_instr.h"
 #include "dev/concole.h"
 #include "tools/klib.h"
 
 #define CONSOLE_NR 1
 static console_t console_buf[CONSOLE_NR];
+
+/**
+ * 读取光标位置
+ */
+static int read_cursor_pos()
+{
+    int pos;
+    outb(0x3d4, 0xf);
+    pos = inb(0x3b5);
+
+    outb(0x3d4, 0xe);
+    pos |= inb(0x3d5) << 8;
+    return pos;
+}
+
+/**
+ * 更新光标位置
+ */
+static int update_cursor_pos(console_t* console)
+{
+    uint16_t pos = console->cursor_row * console->disp_cols + console->cursor_col;
+    outb(0x3d4, 0xf);
+    outb(0x3d5, (uint8_t)(pos & 0xff));
+    outb(0x3d4, 0xe);
+    outb(0x3d5, (uint8_t)((pos >> 8) & 0xff));
+    return pos;
+}
 
 /**
  * 擦除line行
@@ -90,12 +118,17 @@ int console_init()
     for (int i = 0; i < CONSOLE_NR; i++) {
         console_buf[i].foreground = COLOR_WHITE;
         console_buf[i].background = COLOR_BLACK;
-        console_buf[i].cursor_col = console_buf[i].cursor_row = 0;
         console_buf[i].disp_cols = CONSOLE_COL_MAX;
         console_buf[i].disp_row = CONSOLE_ROW_MAX;
         console_buf[i].disp_base = (disp_char_t*)CONSOLE_DISP_ADDR + i * (CONSOLE_COL_MAX * CONSOLE_ROW_MAX);
 
-        clear_display(&console_buf[i]);
+        // 读取光标位置
+        int cursor_pos = read_cursor_pos();
+        // 转换光标位置为行和列
+        console_buf[i].cursor_row = cursor_pos / console_buf[i].disp_cols;
+        console_buf[i].cursor_col = cursor_pos % console_buf[i].disp_cols;
+        
+        // clear_display(&console_buf[i]);
     }
     return 0;
 }
@@ -118,6 +151,7 @@ int console_write(int console, char* data, int size)
             break;
         }
     }
+    update_cursor_pos(c);
     return len;
 }
 
