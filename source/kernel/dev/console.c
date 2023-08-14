@@ -8,7 +8,8 @@ static console_t console_buf[CONSOLE_NR];
 /**
  * 读取光标位置
  */
-static int read_cursor_pos()
+static int
+read_cursor_pos()
 {
     int pos;
     outb(0x3d4, 0xf);
@@ -22,9 +23,11 @@ static int read_cursor_pos()
 /**
  * 更新光标位置
  */
-static int update_cursor_pos(console_t* console)
+static int
+update_cursor_pos(console_t* console)
 {
-    uint16_t pos = console->cursor_row * console->disp_cols + console->cursor_col;
+    uint16_t pos
+        = console->cursor_row * console->disp_cols + console->cursor_col;
     outb(0x3d4, 0xf);
     outb(0x3d5, (uint8_t)(pos & 0xff));
     outb(0x3d4, 0xe);
@@ -35,7 +38,8 @@ static int update_cursor_pos(console_t* console)
 /**
  * 擦除line行
  */
-static void erase_rows(console_t* console, int start, int end)
+static void
+erase_rows(console_t* console, int start, int end)
 {
     disp_char_t* disp_start = console->disp_base + console->disp_cols * start;
     disp_char_t* disp_end = console->disp_base + console->disp_cols * (end + 1);
@@ -50,19 +54,22 @@ static void erase_rows(console_t* console, int start, int end)
 /**
  * 上滚
  */
-static void scroll_up(console_t* console, int line)
+static void
+scroll_up(console_t* console, int line)
 {
     // 上移一行
     disp_char_t* dest = console->disp_base;
     disp_char_t* src = console->disp_base + console->disp_cols * line;
-    uint32_t size = (console->disp_row - line) * console->disp_cols * sizeof(disp_char_t);
+    uint32_t size
+        = (console->disp_row - line) * console->disp_cols * sizeof(disp_char_t);
     kernel_memcpy((void*)dest, (void*)src, size);
     // 清空最后line行
     erase_rows(console, console->disp_row - line, console->disp_row - 1);
     console->cursor_row -= line;
 }
 
-static void move_cursor(console_t* console, int step)
+static void
+move_cursor(console_t* console, int step)
 {
     for (int i = 0; i < step; i++) {
         if (++console->cursor_col >= console->disp_cols) {
@@ -76,7 +83,8 @@ static void move_cursor(console_t* console, int step)
     }
 }
 
-static void show_char(console_t* console, char c)
+static void
+show_char(console_t* console, char c)
 {
     int offset = console->cursor_col + console->cursor_row * console->disp_cols;
     disp_char_t* p = console->disp_base + offset;
@@ -86,12 +94,14 @@ static void show_char(console_t* console, char c)
     move_cursor(console, 1);
 }
 
-static void move_to_col0(console_t* console)
+static void
+move_to_col0(console_t* console)
 {
     console->cursor_col = 0;
 }
 
-static void move_next_line(console_t* console)
+static void
+move_next_line(console_t* console)
 {
     console->cursor_row++;
     if (console->cursor_row >= console->disp_row) {
@@ -102,7 +112,8 @@ static void move_next_line(console_t* console)
 /**
  * 清屏
  */
-static void clear_display(console_t* console)
+static void
+clear_display(console_t* console)
 {
     int size = console->disp_cols * console->disp_row;
     disp_char_t* start = console->disp_base;
@@ -116,7 +127,8 @@ static void clear_display(console_t* console)
 /**
  * 左移n个位置
  */
-static int move_backword(console_t* console, int n)
+static int
+move_backword(console_t* console, int n)
 {
     int status = -1;
 
@@ -137,7 +149,8 @@ static int move_backword(console_t* console, int n)
 /**
  * 往左擦除一个字符
  */
-static void erase_backword(console_t* console)
+static void
+erase_backword(console_t* console)
 {
     if (move_backword(console, 1) == 0) {
         show_char(console, ' ');
@@ -152,7 +165,8 @@ int console_init()
         console_buf[i].background = COLOR_BLACK;
         console_buf[i].disp_cols = CONSOLE_COL_MAX;
         console_buf[i].disp_row = CONSOLE_ROW_MAX;
-        console_buf[i].disp_base = (disp_char_t*)CONSOLE_DISP_ADDR + i * (CONSOLE_COL_MAX * CONSOLE_ROW_MAX);
+        console_buf[i].disp_base = (disp_char_t*)CONSOLE_DISP_ADDR
+            + i * (CONSOLE_COL_MAX * CONSOLE_ROW_MAX);
 
         // 读取光标位置
         int cursor_pos = read_cursor_pos();
@@ -169,7 +183,8 @@ int console_init()
     return 0;
 }
 
-static void write_normal(console_t* c, char ch)
+static void
+write_normal(console_t* c, char ch)
 {
     switch (ch) {
     case ASCII_ESC:
@@ -196,36 +211,33 @@ static void write_normal(console_t* c, char ch)
     }
 }
 
-static void save_cursor(console_t* console)
+static void
+save_cursor(console_t* console)
 {
     console->old_cursor_col = console->cursor_col;
     console->old_cursor_row = console->cursor_row;
 }
 
-static void restore_cursor(console_t* console)
+static void
+restore_cursor(console_t* console)
 {
     console->cursor_col = console->old_cursor_col;
     console->cursor_row = console->old_cursor_row;
 }
 
-static void clear_esc_param(console_t* console)
+static void
+clear_esc_param(console_t* console)
 {
     kernel_memset(console->esc_param, 0, sizeof(console->esc_param));
     console->cur_parm_idx = 0;
 }
 
-static void set_font_style(console_t* console)
+static void
+set_font_style(console_t* console)
 {
-    static const color_t color_table[] = {
-        COLOR_BLACK,
-        COLOR_RED,
-        COLOR_GREEN,
-        COLOR_YELLOW,
-        COLOR_BLUE,
-        COLOR_MAGENTA,
-        COLOR_CYAN,
-        COLOR_WHITE
-    };
+    static const color_t color_table[]
+        = { COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
+              COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE };
 
     for (int i = 0; i <= console->cur_parm_idx; i++) {
         int param = console->esc_param[i];
@@ -241,7 +253,8 @@ static void set_font_style(console_t* console)
     }
 }
 
-static void write_esc(console_t* console, char ch)
+static void
+write_esc(console_t* console, char ch)
 {
     switch (ch) {
     case '7':
@@ -263,6 +276,49 @@ static void write_esc(console_t* console, char ch)
     }
 }
 
+static void erase_in_display(console_t* console)
+{
+    if (console->cur_parm_idx < 0) {
+        return;
+    }
+
+    int param = console->esc_param[0];
+    if (param == 2) {
+        erase_rows(console, 0, console->disp_cols - 1);
+        console->cursor_col = console->cursor_row = 0;
+    }
+}
+
+static void move_cursor(console_t* console)
+{
+    console->cursor_row = console->esc_param[0];
+    console->cursor_col = console->esc_param[1];
+}
+
+static void move_left(console_t* console, int n)
+{
+    if (n == 0) {
+        n == 1;
+    }
+
+    int col = console->cursor_col - n;
+    console->cursor_col = (col >= 0) ? col : 0;
+}
+
+static void move_right(console_t* console, int n)
+{
+    if (n == 0) {
+        n == 1;
+    }
+
+    int col = console->cursor_col + n;
+    if (col >= console->disp_cols) {
+        console->cursor_col = console->disp_cols - 1;
+    } else {
+        console->cursor_col = col;
+    }
+}
+
 static void write_esc_square(console_t* console, char ch)
 {
     if ((ch >= '0') && (ch <= '9')) {
@@ -274,6 +330,19 @@ static void write_esc_square(console_t* console, char ch)
         switch (ch) {
         case 'm':
             set_font_style(console);
+            break;
+        case 'D':
+            move_left(console, console->esc_param[0]);
+            break;
+        case 'C':
+            move_right(console, console->esc_param[0]);
+            break;
+        case 'H':
+        case 'f':
+            move_cursor(console);
+            break;
+        case 'J':
+            erase_in_display(console);
             break;
         default:
             break;
